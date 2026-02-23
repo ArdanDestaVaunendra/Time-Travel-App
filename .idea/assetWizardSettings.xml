@@ -310,8 +310,8 @@
                         <option name="values">
                           <map>
                             <entry key="assetSourceType" value="FILE" />
-                            <entry key="outputName" value="ic_lock" />
-                            <entry key="sourceFile" value="C:\Users\Dell\ic_lock.svg" />
+                            <entry key="outputName" value="ic_backspace" />
+                            <entry key="sourceFile" value="C:\Users\Dell\ic_backspace.svg" />
                           </map>
                         </option>
                       </PersistentState>

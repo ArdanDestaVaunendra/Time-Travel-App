@@ -10,7 +10,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:fillViewport="true"
-        app:layout_constraintBottom_toTopOf="@id/cardTypingPreview"
+        app:layout_constraintBottom_toTopOf="@id/bottomBar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -211,8 +211,10 @@
                             android:textStyle="bold" />
 
                         <RadioGroup
+                            android:id="@+id/rgTimeTrigger"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content">
+
                             <RadioButton
                                 android:id="@+id/rbVolume"
                                 android:layout_width="match_parent"
@@ -222,6 +224,7 @@
                                 android:text="Volume Button (down)"
                                 android:textColor="#1D1D1F"
                                 app:buttonTint="#5800D1" />
+
                             <RadioButton
                                 android:id="@+id/rbDoubleTap"
                                 android:layout_width="match_parent"
@@ -235,6 +238,29 @@
                             android:layout_width="match_parent"
                             android:layout_height="1dp"
                             android:layout_marginTop="16dp"
+                            android:layout_marginBottom="16dp"
+                            android:background="#F0F0F0" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
+                            android:text="TIME FLOW SPEED"
+                            android:textColor="#86868B"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <Spinner
+                            android:id="@+id/spinnerTimeSpeed"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:layout_marginBottom="16dp"
+                            android:backgroundTint="#5800D1"
+                            android:entries="@array/speed_options" />
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
                             android:layout_marginBottom="16dp"
                             android:background="#F0F0F0" />
 
@@ -430,6 +456,183 @@
                             app:thumbTint="@color/switch_thumb_color"
                             app:trackTint="@color/switch_track_color" />
 
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginTop="16dp"
+                            android:layout_marginBottom="16dp"
+                            android:background="#F0F0F0" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
+                            android:text="SECURITY (UNLOCK METHOD)"
+                            android:textColor="#86868B"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchEnablePin"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="4dp"
+                            android:checked="true"
+                            android:text="Require PIN to Unlock"
+                            android:textColor="#1D1D1F"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            app:thumbTint="@color/switch_thumb_color"
+                            app:trackTint="@color/switch_track_color" />
+
+                        <EditText
+                            android:id="@+id/etCustomPin"
+                            android:layout_width="match_parent"
+                            android:layout_height="50dp"
+                            android:layout_marginBottom="16dp"
+                            android:background="#F5F5F7"
+                            android:hint="Set 6-Digit PIN (e.g. 123456)"
+                            android:imeOptions="actionDone"
+                            android:inputType="numberPassword"
+                            android:maxLength="6"
+                            android:paddingHorizontal="16dp"
+                            android:textColor="#575757"
+                            android:textSize="14sp" />
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginTop="16dp"
+                            android:layout_marginBottom="16dp"
+                            android:background="#F0F0F0" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="MAGIC REVELATION (SECRET MESSAGE)"
+                            android:textColor="#86868B"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchEnableReveal"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Enable Secret Message"
+                            android:textColor="#1D1D1F"
+                            app:thumbTint="@color/switch_thumb_color"
+                            app:trackTint="@color/switch_track_color" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="Change target:"
+                            android:textSize="12sp" />
+
+                        <RadioGroup
+                            android:id="@+id/rgRevealTarget"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <RadioButton
+                                android:id="@+id/rbTargetCarrier"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Carrier"
+                                android:textSize="12sp"
+                                app:buttonTint="#5800D1" />
+
+                            <RadioButton
+                                android:id="@+id/rbTargetMarquee"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Marquee"
+                                android:textSize="12sp"
+                                app:buttonTint="#5800D1" />
+
+                            <RadioButton
+                                android:id="@+id/rbTargetBoth"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Both"
+                                android:textSize="12sp"
+                                app:buttonTint="#5800D1" />
+                        </RadioGroup>
+
+                        <EditText
+                            android:id="@+id/etRevealText"
+                            android:layout_width="match_parent"
+                            android:layout_height="50dp"
+                            android:background="#F5F5F7"
+                            android:hint="The secret message to reveal..."
+                            android:paddingHorizontal="16dp"
+                            android:textSize="14sp" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Delay After Trigger (Sec)" />
+
+                            <Button
+                                android:id="@+id/btnRevealDelayMinus"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:padding="0dp"
+                                android:text="-"
+                                android:textColor="#1D1D1F"
+                                android:textSize="18sp"
+                                app:backgroundTint="#F5F5F7"
+                                app:cornerRadius="12dp"
+                                app:elevation="0dp" />
+
+                            <TextView
+                                android:id="@+id/tvRevealDelayValue"
+                                android:layout_width="40dp"
+                                android:layout_height="wrap_content"
+                                android:gravity="center"
+                                android:text="3"
+                                android:textColor="#1D1D1F"
+                                android:textSize="18sp"
+                                android:textStyle="bold" />
+
+                            <Button
+                                android:id="@+id/btnRevealDelayPlus"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:padding="0dp"
+                                android:text="+"
+                                android:textColor="#FFFFFF"
+                                android:textSize="18sp"
+                                app:backgroundTint="#5800D1"
+                                app:cornerRadius="12dp"
+                                app:elevation="0dp"
+                                app:iconPadding="0dp" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/tvTriggerInfo"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:background="#FFF9C4"
+                            android:padding="8dp"
+                            android:text="Info: Trigger is the opposite of Time Trigger."
+                            android:textColor="#BC5100"
+                            android:textSize="11sp" />
+
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -476,23 +679,35 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnStart"
-                android:layout_width="match_parent"
-                android:layout_height="64dp"
-                android:layout_marginBottom="24dp"
-                android:text="Start Magic"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                app:backgroundTint="#5800D1"
-                app:cornerRadius="32dp" />
-
             <View
                 android:layout_width="match_parent"
-                android:layout_height="100dp" />
+                android:layout_height="24dp" />
 
         </LinearLayout>
     </ScrollView>
+
+    <LinearLayout
+        android:id="@+id/bottomBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#F5F5F7"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="24dp"
+        app:layout_constraintBottom_toTopOf="@id/cardTypingPreview"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnStart"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:text="Start Magic"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:backgroundTint="#5800D1"
+            app:cornerRadius="32dp" />
+    </LinearLayout>
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardTypingPreview"

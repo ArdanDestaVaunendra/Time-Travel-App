@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
+import android.widget.AdapterView
 import android.widget.EditText
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.ActivityResultLauncher
@@ -22,6 +23,7 @@ class ConfigActivity : AppCompatActivity() {
     private val prefs by lazy { getSharedPreferences("MagicPrefs", Context.MODE_PRIVATE) }
     private var offsetMinutes = 0
     private var delaySeconds = 5
+    private var revealDelaySeconds = 3
 
     private lateinit var pickImage: ActivityResultLauncher<String>
 
@@ -49,6 +51,23 @@ class ConfigActivity : AppCompatActivity() {
             }
         }
 
+        binding.spinnerTimeSpeed.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                val selectedSpeed: Float = when (position) {
+                    0 -> 1.35f
+                    1 -> 1.2f
+                    2 -> 1.0f
+                    3 -> 0.85f
+                    4 -> 0.7f
+                    5 -> 0.45f
+                    6 -> 0.2f
+                    else -> 1.0f
+                }
+                prefs.edit().putFloat("TIME_SPEED", selectedSpeed).apply()
+            }
+            override fun onNothingSelected(parent: AdapterView<*>) {}
+        }
+
         loadSavedSettings()
         updateUIText()
 
@@ -71,6 +90,26 @@ class ConfigActivity : AppCompatActivity() {
 
         binding.switchShowMarquee.setOnCheckedChangeListener { _, isChecked ->
             binding.etCustomMarquee.visibility = if (isChecked) View.VISIBLE else View.GONE
+        }
+
+        binding.switchEnablePin.setOnCheckedChangeListener { _, isChecked ->
+            binding.etCustomPin.isEnabled = isChecked
+            binding.etCustomPin.alpha = if (isChecked) 1.0f else 0.5f
+        }
+
+        setupLivePreview(binding.etRevealText, "Secret Message")
+
+        binding.btnRevealDelayPlus.setOnClickListener {
+            revealDelaySeconds++
+            updateUIText()
+        }
+        binding.btnRevealDelayMinus.setOnClickListener {
+            if (revealDelaySeconds > 0) revealDelaySeconds--
+            updateUIText()
+        }
+
+        binding.rgTimeTrigger.setOnCheckedChangeListener { _, _ ->
+            updateTriggerInfo()
         }
 
         binding.tvToggleAdvanced.setOnClickListener {
@@ -142,6 +181,18 @@ class ConfigActivity : AppCompatActivity() {
         val sign = if (offsetMinutes > 0) "+" else ""
         binding.tvOffsetValue.text = "$sign$offsetMinutes"
         binding.tvDelayValue.text = delaySeconds.toString()
+
+        binding.tvRevealDelayValue.text = revealDelaySeconds.toString()
+        updateTriggerInfo()
+    }
+
+    private fun updateTriggerInfo() {
+        val isVolumeForTime = binding.rbVolume.isChecked
+        binding.tvTriggerInfo.text = if (isVolumeForTime) {
+            "Info: Time uses Volume Down, so SECRET MESSAGE uses DOUBLE TAP."
+        } else {
+            "Info: Time uses Double Tap, so SECRET MESSAGE uses VOLUME DOWN."
+        }
     }
 
     private fun loadSavedSettings() {
@@ -170,7 +221,6 @@ class ConfigActivity : AppCompatActivity() {
         binding.etCustomCarrier.visibility = if (showCarrier) View.VISIBLE else View.GONE
         binding.etCustomMarquee.visibility = if (showMarquee) View.VISIBLE else View.GONE
 
-        // Load Status Bar Icons Toggles
         binding.switchShowWifi.isChecked = prefs.getBoolean("SHOW_WIFI", true)
         binding.switchSignal1.isChecked = prefs.getBoolean("SIM1_4G", true)
         binding.switchSignal2.isChecked = prefs.getBoolean("SIM2_4G", false)
@@ -182,33 +232,85 @@ class ConfigActivity : AppCompatActivity() {
             binding.rbFormat12.isChecked = true
         }
 
-        val savedLang = prefs.getString("DATE_LANGUAGE", "id") // Default "id"
+        val savedLang = prefs.getString("DATE_LANGUAGE", "id")
         if (savedLang == "en") {
             binding.rbLangEN.isChecked = true
         } else {
             binding.rbLangID.isChecked = true
         }
+
+        val savedSpeed = prefs.getFloat("TIME_SPEED", 1.0f)
+        val position = when (savedSpeed) {
+            1.35f -> 0
+            1.2f -> 1
+            1.0f -> 2
+            0.85f -> 3
+            0.7f -> 4
+            0.45f -> 5
+            0.2f -> 6
+            else -> 2
+        }
+        binding.spinnerTimeSpeed.setSelection(position)
+
+        val isPinEnabled = prefs.getBoolean("ENABLE_PIN", true)
+        binding.switchEnablePin.isChecked = isPinEnabled
+        binding.etCustomPin.setText(prefs.getString("CUSTOM_PIN", "123456"))
+
+        binding.etCustomPin.isEnabled = isPinEnabled
+        binding.etCustomPin.alpha = if (isPinEnabled) 1.0f else 0.5f
+
+        binding.switchEnableReveal.isChecked = prefs.getBoolean("ENABLE_REVEAL", false)
+        binding.etRevealText.setText(prefs.getString("REVEAL_TEXT", ""))
+        revealDelaySeconds = prefs.getInt("REVEAL_DELAY", 3)
+
+        val target = prefs.getString("REVEAL_TARGET", "BOTH")
+        when(target) {
+            "CARRIER" -> binding.rbTargetCarrier.isChecked = true
+            "MARQUEE" -> binding.rbTargetMarquee.isChecked = true
+            else -> binding.rbTargetBoth.isChecked = true
+        }
+        updateUIText()
     }
 
-
     private fun saveSettings() {
-        prefs.edit().apply {
-            putInt("OFFSET_SEC", offsetMinutes * 60)
-            putInt("DELAY_MS", delaySeconds * 1000)
-            putBoolean("TRIGGER_VOLUME", binding.rbVolume.isChecked)
+        val editor = prefs.edit()
 
-            putString("CUSTOM_CARRIER", binding.etCustomCarrier.text.toString())
-            putString("CUSTOM_MARQUEE", binding.etCustomMarquee.text.toString())
+        editor.putInt("OFFSET_SEC", offsetMinutes * 60)
+        editor.putInt("DELAY_MS", delaySeconds * 1000)
+        editor.putBoolean("TRIGGER_VOLUME", binding.rbVolume.isChecked)
 
-            putBoolean("SHOW_CARRIER", binding.switchShowCarrier.isChecked)
-            putBoolean("SHOW_MARQUEE", binding.switchShowMarquee.isChecked)
+        editor.putString("CUSTOM_CARRIER", binding.etCustomCarrier.text.toString())
+        editor.putString("CUSTOM_MARQUEE", binding.etCustomMarquee.text.toString())
 
-            // Save Status Bar Icons Toggles
-            putBoolean("SHOW_WIFI", binding.switchShowWifi.isChecked)
-            putBoolean("SIM1_4G", binding.switchSignal1.isChecked)
-            putBoolean("SIM2_4G", binding.switchSignal2.isChecked)
+        editor.putBoolean("SHOW_CARRIER", binding.switchShowCarrier.isChecked)
+        editor.putBoolean("SHOW_MARQUEE", binding.switchShowMarquee.isChecked)
 
-            putBoolean("IS_24H", binding.rbFormat24.isChecked)
-        }.apply()
+        editor.putBoolean("SHOW_WIFI", binding.switchShowWifi.isChecked)
+        editor.putBoolean("SIM1_4G", binding.switchSignal1.isChecked)
+        editor.putBoolean("SIM2_4G", binding.switchSignal2.isChecked)
+
+        editor.putBoolean("IS_24H", binding.rbFormat24.isChecked)
+
+        editor.putBoolean("ENABLE_PIN", binding.switchEnablePin.isChecked)
+
+        val pinInput = binding.etCustomPin.text.toString()
+        val pinToSave = if (pinInput.isNotEmpty()) pinInput else "123456"
+        editor.putString("CUSTOM_PIN", pinToSave)
+
+        editor.apply()
+
+        editor.putBoolean("ENABLE_REVEAL", binding.switchEnableReveal.isChecked)
+        editor.putString("REVEAL_TEXT", binding.etRevealText.text.toString())
+        editor.putInt("REVEAL_DELAY", revealDelaySeconds)
+
+        val targetId = binding.rgRevealTarget.checkedRadioButtonId
+        val targetString = when(targetId) {
+            R.id.rbTargetCarrier -> "CARRIER"
+            R.id.rbTargetMarquee -> "MARQUEE"
+            else -> "BOTH"
+        }
+        editor.putString("REVEAL_TARGET", targetString)
+
+        editor.apply()
     }
 }
