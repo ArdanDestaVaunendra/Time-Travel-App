@@ -463,7 +463,7 @@
                         layout="@layout/item_pin_button" />
 
                     <TextView
-                        android:id="@+id/btnOkPin"
+                        android:id="@+id/btnOk"
                         android:layout_width="72dp"
                         android:layout_height="72dp"
                         android:layout_margin="10dp"

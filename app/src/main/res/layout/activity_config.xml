@@ -499,6 +499,42 @@
                             android:textColor="#575757"
                             android:textSize="14sp" />
 
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:text="PREDICTION LANGUAGE"
+                            android:textColor="#86868B"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <RadioGroup
+                            android:id="@+id/rgPredictionLang"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginBottom="8dp">
+
+                            <RadioButton
+                                android:id="@+id/rbPredLangID"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:checked="true"
+                                android:text="ID (As Sekop)"
+                                android:textColor="#1D1D1F"
+                                app:buttonTint="#5800D1" />
+
+                            <RadioButton
+                                android:id="@+id/rbPredLangEN"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="EN (Ace of Spades)"
+                                android:textColor="#1D1D1F"
+                                app:buttonTint="#5800D1" />
+                        </RadioGroup>
+
                         <View
                             android:layout_width="match_parent"
                             android:layout_height="1dp"
@@ -522,6 +558,15 @@
                             android:textColor="#1D1D1F"
                             app:thumbTint="@color/switch_thumb_color"
                             app:trackTint="@color/switch_track_color" />
+
+                        <EditText
+                            android:id="@+id/etRevealText"
+                            android:layout_width="match_parent"
+                            android:layout_height="50dp"
+                            android:background="#F5F5F7"
+                            android:hint="The secret message to reveal..."
+                            android:paddingHorizontal="16dp"
+                            android:textSize="14sp" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -564,14 +609,54 @@
                                 app:buttonTint="#5800D1" />
                         </RadioGroup>
 
-                        <EditText
-                            android:id="@+id/etRevealText"
+                        <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="50dp"
-                            android:background="#F5F5F7"
-                            android:hint="The secret message to reveal..."
-                            android:paddingHorizontal="16dp"
-                            android:textSize="14sp" />
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Text Display Duration (Sec)"
+                                android:textSize="12sp" />
+
+                            <Button
+                                android:id="@+id/btnRevealDurationMinus"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:padding="0dp"
+                                android:text="-"
+                                android:textColor="#1D1D1F"
+                                android:textSize="18sp"
+                                app:backgroundTint="#F5F5F7"
+                                app:cornerRadius="12dp"
+                                app:elevation="0dp" />
+
+                            <TextView
+                                android:id="@+id/tvRevealDurationValue"
+                                android:layout_width="40dp"
+                                android:layout_height="wrap_content"
+                                android:gravity="center"
+                                android:text="7"
+                                android:textColor="#1D1D1F"
+                                android:textSize="18sp"
+                                android:textStyle="bold" />
+
+                            <Button
+                                android:id="@+id/btnRevealDurationPlus"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:padding="0dp"
+                                android:text="+"
+                                android:textColor="#FFFFFF"
+                                android:textSize="18sp"
+                                app:backgroundTint="#5800D1"
+                                app:cornerRadius="12dp"
+                                app:elevation="0dp" />
+                        </LinearLayout>
 
                         <LinearLayout
                             android:layout_width="match_parent"

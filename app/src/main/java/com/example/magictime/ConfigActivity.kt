@@ -24,6 +24,7 @@ class ConfigActivity : AppCompatActivity() {
     private var offsetMinutes = 0
     private var delaySeconds = 5
     private var revealDelaySeconds = 3
+    private var revealDurationSeconds = 7
 
     private lateinit var pickImage: ActivityResultLauncher<String>
 
@@ -112,6 +113,15 @@ class ConfigActivity : AppCompatActivity() {
             updateTriggerInfo()
         }
 
+        binding.btnRevealDurationPlus.setOnClickListener {
+            revealDurationSeconds++
+            updateUIText()
+        }
+        binding.btnRevealDurationMinus.setOnClickListener {
+            if (revealDurationSeconds > 1) revealDurationSeconds--
+            updateUIText()
+        }
+
         binding.tvToggleAdvanced.setOnClickListener {
             android.transition.TransitionManager.beginDelayedTransition(
                 binding.mainScrollView as android.view.ViewGroup,
@@ -181,6 +191,8 @@ class ConfigActivity : AppCompatActivity() {
         val sign = if (offsetMinutes > 0) "+" else ""
         binding.tvOffsetValue.text = "$sign$offsetMinutes"
         binding.tvDelayValue.text = delaySeconds.toString()
+
+        binding.tvRevealDurationValue.text = revealDurationSeconds.toString()
 
         binding.tvRevealDelayValue.text = revealDelaySeconds.toString()
         updateTriggerInfo()
@@ -259,6 +271,8 @@ class ConfigActivity : AppCompatActivity() {
         binding.etCustomPin.isEnabled = isPinEnabled
         binding.etCustomPin.alpha = if (isPinEnabled) 1.0f else 0.5f
 
+        revealDurationSeconds = prefs.getInt("REVEAL_DURATION", 7)
+
         binding.switchEnableReveal.isChecked = prefs.getBoolean("ENABLE_REVEAL", false)
         binding.etRevealText.setText(prefs.getString("REVEAL_TEXT", ""))
         revealDelaySeconds = prefs.getInt("REVEAL_DELAY", 3)
@@ -268,6 +282,13 @@ class ConfigActivity : AppCompatActivity() {
             "CARRIER" -> binding.rbTargetCarrier.isChecked = true
             "MARQUEE" -> binding.rbTargetMarquee.isChecked = true
             else -> binding.rbTargetBoth.isChecked = true
+        }
+
+        val savedPredLang = prefs.getString("PREDICTION_LANG", "id")
+        if (savedPredLang == "en") {
+            binding.rbPredLangEN.isChecked = true
+        } else {
+            binding.rbPredLangID.isChecked = true
         }
         updateUIText()
     }
@@ -296,8 +317,10 @@ class ConfigActivity : AppCompatActivity() {
         val pinInput = binding.etCustomPin.text.toString()
         val pinToSave = if (pinInput.isNotEmpty()) pinInput else "123456"
         editor.putString("CUSTOM_PIN", pinToSave)
+        val predLang = if (binding.rbPredLangEN.isChecked) "en" else "id"
+        editor.putString("PREDICTION_LANG", predLang)
 
-        editor.apply()
+        editor.putInt("REVEAL_DURATION", revealDurationSeconds)
 
         editor.putBoolean("ENABLE_REVEAL", binding.switchEnableReveal.isChecked)
         editor.putString("REVEAL_TEXT", binding.etRevealText.text.toString())

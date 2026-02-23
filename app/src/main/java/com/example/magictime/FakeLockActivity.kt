@@ -57,6 +57,13 @@ class FakeLockActivity : AppCompatActivity() {
     private var screenHeight = 0
     private val swipeThreshold = 0.15f
     private var isSwipingForUnlock = false
+    private var isSecretSetupMode = false
+    private var secretSetupStep = 0
+    private var secretCardValue = ""
+    var forceCardPrediction = ""
+    var useIndonesianLanguage = true
+    private var isCardCodeEnabled = true
+    private var revealDurationMs = 7000L
 
     private val batteryReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -356,10 +363,17 @@ class FakeLockActivity : AppCompatActivity() {
             binding.iv4g2.visibility = View.GONE; binding.ivSignal2.setColorFilter(plainColor)
         }
 
+        isCardCodeEnabled = prefs.getBoolean("ENABLE_CARD_CODE", true)
+        revealDurationMs = prefs.getInt("REVEAL_DURATION", 7) * 1000L
+        revealText = prefs.getString("REVEAL_TEXT", "") ?: ""
+
         isRevealEnabled = prefs.getBoolean("ENABLE_REVEAL", false)
         revealText = prefs.getString("REVEAL_TEXT", "") ?: ""
         revealDelay = prefs.getInt("REVEAL_DELAY", 3)
         revealTarget = prefs.getString("REVEAL_TARGET", "BOTH") ?: "BOTH"
+
+        val predLangCode = prefs.getString("PREDICTION_LANG", "id") ?: "id"
+        useIndonesianLanguage = (predLangCode == "id")
     }
 
     private fun loadWallpaper() {
@@ -512,12 +526,62 @@ class FakeLockActivity : AppCompatActivity() {
             }
         }
 
-        binding.btnDeletePin.setOnClickListener { onPinDelete() }
+        binding.ivLockIcon.setOnClickListener {
+            vibratePattern(isDouble = false)
 
-        val btnOk = findViewById<android.widget.TextView>(R.id.btnOkPin)
-        btnOk.setOnClickListener {
-            validatePin()
+            hidePinScreen()
         }
+
+        binding.btnOk.setOnLongClickListener {
+            vibratePattern(isDouble = false)
+            isSecretSetupMode = true
+            secretSetupStep = 1
+            currentPinInput = ""
+            updatePinIndicators()
+            true
+        }
+
+        binding.btnOk.setOnClickListener {
+            if (isSecretSetupMode) {
+                when (secretSetupStep) {
+                    1 -> {
+                        val input = currentPinInput.toIntOrNull() ?: 0
+                        if (input in 1..13) {
+                            secretCardValue = currentPinInput
+                            vibratePattern(isDouble = false)
+                            secretSetupStep = 2
+                        } else {
+                            isSecretSetupMode = false
+                            secretSetupStep = 0
+                        }
+                        currentPinInput = ""
+                        updatePinIndicators()
+                    }
+                    2 -> {
+                        val input = currentPinInput.toIntOrNull() ?: 0
+                        if (input in 1..4) {
+                            generateCardPrediction(secretCardValue, input)
+                            vibratePattern(isDouble = true)
+                            val baseCustomText = prefs.getString("REVEAL_TEXT", "") ?: ""
+                            revealText = if (baseCustomText.isNotEmpty()) {
+                                "$baseCustomText $forceCardPrediction"
+                            } else {
+                                forceCardPrediction
+                            }
+                        }
+
+                        isSecretSetupMode = false
+                        secretSetupStep = 0
+                        currentPinInput = ""
+                        updatePinIndicators()
+                    }
+                }
+            } else {
+                validatePin()
+            }
+        }
+
+        binding.btnDeletePin.setOnClickListener { onPinDelete() }
 
         binding.btnEmergencyPin.setOnClickListener {
             try {
@@ -792,15 +856,44 @@ class FakeLockActivity : AppCompatActivity() {
     }
 
     private fun hidePinScreen() {
+        val duration = 250L
+        val shrinkInterpolator = android.view.animation.AnticipateInterpolator()
+
+        fun shrinkOutAnim(v: View, delay: Long) {
+            v.animate()
+                .scaleX(0.7f)
+                .scaleY(0.7f)
+                .alpha(0f)
+                .setStartDelay(delay)
+                .setDuration(duration)
+                .setInterpolator(shrinkInterpolator)
+                .start()
+        }
+
+        shrinkOutAnim(binding.tvEnterPinLabel, 0)
+        shrinkOutAnim(binding.tvPinInfoLabel, 20)
+        shrinkOutAnim(binding.pinIndicatorsLayout, 40)
+        shrinkOutAnim(binding.bottomKeypadContainer, 60)
+
+        binding.ivLockIcon.animate().alpha(0f).setDuration(duration).start()
+
         binding.pinScreenContainer.animate()
             .alpha(0f)
-            .translationY(binding.root.height.toFloat())
-            .setDuration(300)
-            .setInterpolator(android.view.animation.AccelerateInterpolator())
+            .translationY(0f)
+            .setStartDelay(100)
+            .setDuration(200)
             .withEndAction {
                 binding.pinScreenContainer.visibility = View.GONE
                 currentPinInput = ""
                 updatePinIndicators()
+
+                binding.tvEnterPinLabel.scaleX = 1f
+                binding.tvEnterPinLabel.scaleY = 1f
+                binding.tvPinInfoLabel.scaleX = 1f
+                binding.tvPinInfoLabel.scaleY = 1f
+                binding.pinIndicatorsLayout.scaleX = 1f
+                binding.pinIndicatorsLayout.scaleY = 1f
+                binding.pinIndicatorsLayout.alpha = 1f
             }
             .start()
     }
@@ -942,9 +1035,43 @@ class FakeLockActivity : AppCompatActivity() {
             overridePendingTransition(0, android.R.anim.fade_out)
         }, duration)
     }
-}
 
-// kotlin
+    @SuppressLint("NewApi")
+    private fun vibratePattern(isDouble: Boolean) {
+        val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? android.os.Vibrator
+
+        if (isDouble) {
+            val pattern = longArrayOf(0, 50, 100, 50)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                vibrator?.vibrate(android.os.VibrationEffect.createWaveform(pattern, -1))
+            } else {
+                vibrator?.vibrate(pattern, -1)
+            }
+        } else {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                vibrator?.vibrate(android.os.VibrationEffect.createOneShot(50, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                vibrator?.vibrate(50)
+            }
+        }
+    }
+
+    private fun generateCardPrediction(valueStr: String, suitCode: Int) {
+        val valueInt = valueStr.toIntOrNull() ?: 1
+
+        val valueEn = when (valueInt) { 1 -> "Ace"; 11 -> "Jack"; 12 -> "Queen"; 13 -> "King"; else -> valueStr }
+        val valueId = when (valueInt) { 1 -> "As"; 11 -> "Jack"; 12 -> "Queen"; 13 -> "King"; else -> valueStr }
+
+        val suitEn = when (suitCode) { 1 -> "Diamonds"; 2 -> "Clubs"; 3 -> "Hearts"; 4 -> "Spades"; else -> "" }
+        val suitId = when (suitCode) { 1 -> "Wajik"; 2 -> "Keriting"; 3 -> "Hati"; 4 -> "Sekop"; else -> "" }
+
+        forceCardPrediction = if (useIndonesianLanguage) {
+            "$valueId $suitId"
+        } else {
+            "$valueEn of $suitEn"
+        }
+    }
+}
 
 private fun blurBitmap(context: Context, bitmap: android.graphics.Bitmap, radius: Float): android.graphics.Bitmap {
     val clampedRadius = radius.coerceIn(0f, 25f)
@@ -988,4 +1115,3 @@ private fun blurBitmap(context: Context, bitmap: android.graphics.Bitmap, radius
         try { rs?.destroy() } catch (_: Throwable) {}
     }
 }
-
