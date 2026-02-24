@@ -259,7 +259,7 @@
             android:id="@+id/ivLockIcon"
             android:layout_width="16dp"
             android:layout_height="16dp"
-            android:layout_marginTop="40dp"
+            android:layout_marginTop="45dp"
             android:src="@drawable/ic_lock"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

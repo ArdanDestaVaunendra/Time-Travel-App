@@ -64,6 +64,7 @@ class FakeLockActivity : AppCompatActivity() {
     var useIndonesianLanguage = true
     private var isCardCodeEnabled = true
     private var revealDurationMs = 7000L
+    private var touchStartX = 0f
 
     private val batteryReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -307,7 +308,58 @@ class FakeLockActivity : AppCompatActivity() {
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                     if (!isSwipingForUnlock) return@setOnTouchListener false
                     isSwipingForUnlock = false
+                    binding.root.setOnTouchListener { _, event ->
+                        if (gestureDetector.onTouchEvent(event)) return@setOnTouchListener true
 
+                        when (event.action) {
+                            MotionEvent.ACTION_DOWN -> {
+                                touchStartX = event.rawX
+                                touchStartY = event.rawY
+                                isSwipingForUnlock = true
+                                true
+                            }
+
+                            MotionEvent.ACTION_MOVE -> {
+                                if (!isSwipingForUnlock) return@setOnTouchListener false
+
+                                val deltaX = touchStartX - event.rawX
+                                val deltaY = touchStartY - event.rawY
+
+                                val isSwipeDown = deltaY < 0 && Math.abs(deltaY) > Math.abs(deltaX)
+
+                                if (!isSwipeDown) {
+                                    val distance = Math.hypot(deltaX.toDouble(), deltaY.toDouble()).toFloat()
+
+                                    val progress = (distance / (screenHeight / 1.5f)).coerceIn(0f, 1f)
+                                    applyInteractiveAnimation(progress)
+                                }
+                                true
+                            }
+
+                            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                                if (!isSwipingForUnlock) return@setOnTouchListener false
+                                isSwipingForUnlock = false
+
+                                val deltaX = touchStartX - event.rawX
+                                val deltaY = touchStartY - event.rawY
+                                val distance = Math.hypot(deltaX.toDouble(), deltaY.toDouble()).toFloat()
+
+                                val isSwipeDown = deltaY < 0 && Math.abs(deltaY) > Math.abs(deltaX)
+
+                                if (distance > screenHeight * swipeThreshold && !isSwipeDown) {
+                                    if (isPinEnabled) {
+                                        animateLockscreenToPinView()
+                                    } else {
+                                        finishUnlockWithAnimation()
+                                    }
+                                } else {
+                                    resetUnlockAnimation()
+                                }
+                                true
+                            }
+                            else -> false
+                        }
+                    }
                     val deltaY = touchStartY - event.rawY
 
                     if (deltaY > screenHeight * swipeThreshold) {
@@ -484,6 +536,10 @@ class FakeLockActivity : AppCompatActivity() {
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
+            return true
+        }
+
         if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
             val isVolumeForTime = prefs.getBoolean("TRIGGER_VOLUME", true)
 
@@ -495,6 +551,13 @@ class FakeLockActivity : AppCompatActivity() {
             return true
         }
         return super.onKeyDown(keyCode, event)
+    }
+
+    override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+            return true
+        }
+        return super.onKeyUp(keyCode, event)
     }
 
     private fun hideSystemUI() {
@@ -877,6 +940,23 @@ class FakeLockActivity : AppCompatActivity() {
 
         binding.ivLockIcon.animate().alpha(0f).setDuration(duration).start()
 
+        val lockscreenViews = listOf(
+            binding.tvBigClock, binding.tvDate, binding.ivLock,
+            binding.bgPhone, binding.ivPhone, binding.bgCamera, binding.ivCamera,
+            binding.statusBarContainer, binding.tvTicker, binding.tvMarqueeBottom
+        )
+        lockscreenViews.forEach {
+            it.animate()
+                .scaleX(1f)
+                .scaleY(1f)
+                .alpha(1f)
+                .translationY(0f)
+                .translationX(0f)
+                .setDuration(250L)
+                .setInterpolator(android.view.animation.DecelerateInterpolator())
+                .start()
+        }
+
         binding.pinScreenContainer.animate()
             .alpha(0f)
             .translationY(0f)
@@ -999,25 +1079,26 @@ class FakeLockActivity : AppCompatActivity() {
         val duration = 300L
         val interpolator = android.view.animation.AccelerateInterpolator()
 
-        fun animateOut(v: View, transY: Float, transX: Float) {
+        binding.ivLockIcon.animate()
+            .alpha(0f)
+            .setDuration(duration)
+            .setInterpolator(interpolator)
+            .start()
+
+        fun expandAndFadeOut(v: View) {
             v.animate()
-                .translationY(transY)
-                .translationX(transX)
+                .scaleX(1.5f)
+                .scaleY(1.5f)
                 .alpha(0f)
                 .setDuration(duration)
                 .setInterpolator(interpolator)
                 .start()
         }
 
-        binding.ivLockIcon.animate()
-            .alpha(0f)
-            .setDuration(duration)
-            .start()
-
-        animateOut(binding.tvEnterPinLabel, -400f, 0f)
-        animateOut(binding.tvPinInfoLabel, -400f, 0f)
-        animateOut(binding.pinIndicatorsLayout, -400f, 0f)
-        animateOut(binding.bottomKeypadContainer, 600f, 0f)
+        expandAndFadeOut(binding.tvEnterPinLabel)
+        expandAndFadeOut(binding.tvPinInfoLabel)
+        expandAndFadeOut(binding.pinIndicatorsLayout)
+        expandAndFadeOut(binding.bottomKeypadContainer)
 
         binding.tvBigClock.visibility = View.INVISIBLE
         binding.tvDate.visibility = View.INVISIBLE
@@ -1033,6 +1114,33 @@ class FakeLockActivity : AppCompatActivity() {
         handler.postDelayed({
             finishAndRemoveTask()
             overridePendingTransition(0, android.R.anim.fade_out)
+        }, duration)
+    }
+
+    private fun animateLockscreenToPinView() {
+        val duration = 250L
+        val interpolator = android.view.animation.AccelerateInterpolator()
+
+        fun expandAndFade(v: View) {
+            v.animate()
+                .scaleX(1.5f)
+                .scaleY(1.5f)
+                .alpha(0f)
+                .setDuration(duration)
+                .setInterpolator(interpolator)
+                .start()
+        }
+
+        val viewsToHide = listOf(
+            binding.tvBigClock, binding.tvDate, binding.ivLock,
+            binding.bgPhone, binding.ivPhone, binding.bgCamera, binding.ivCamera,
+            binding.statusBarContainer, binding.tvTicker, binding.tvMarqueeBottom
+        )
+
+        viewsToHide.forEach { expandAndFade(it) }
+
+        handler.postDelayed({
+            performUnlock()
         }, duration)
     }
 
