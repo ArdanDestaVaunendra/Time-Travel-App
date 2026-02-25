@@ -1217,9 +1217,28 @@ private fun blurBitmap(context: Context, bitmap: android.graphics.Bitmap, radius
         e.printStackTrace()
         bitmap
     } finally {
-        try { script?.destroy() } catch (_: Throwable) {}
-        try { inputAlloc?.destroy() } catch (_: Throwable) {}
-        try { outputAlloc?.destroy() } catch (_: Throwable) {}
-        try { rs?.destroy() } catch (_: Throwable) {}
+        try {
+            script?.destroy()
+        } catch (_: Throwable) {
+
+        }
+
+        try {
+            inputAlloc?.destroy()
+        } catch (_: Throwable) {
+
+        }
+
+        try {
+            outputAlloc?.destroy()
+        } catch (_: Throwable) {
+
+        }
+
+        try {
+            rs?.destroy()
+        } catch (_: Throwable) {
+
+        }
     }
 }

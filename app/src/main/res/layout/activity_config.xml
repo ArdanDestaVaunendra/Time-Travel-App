@@ -3,42 +3,58 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F7">
+    android:background="#F5F5F7"
+    android:focusable="true"
+    android:focusableInTouchMode="true" >
+
+    <LinearLayout
+        android:id="@+id/topHeaderBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#F5F5F7"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="1dp"
+            android:fontFamily="sans-serif-black"
+            android:text="Past Tense"
+            android:textColor="#1D1D1F"
+            android:textSize="34sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-medium"
+            android:text="by: Ardan Desta Vaunendra"
+            android:textColor="#1D1D1F"
+            android:textSize="13sp" />
+    </LinearLayout>
 
     <ScrollView
         android:id="@+id/mainScrollView"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:fillViewport="true"
+        android:clipToPadding="false"
         app:layout_constraintBottom_toTopOf="@id/bottomBar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/topHeaderBar">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="24dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="1dp"
-                android:fontFamily="sans-serif-black"
-                android:text="Past Tense"
-                android:textColor="#1D1D1F"
-                android:textSize="34sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                android:fontFamily="sans-serif-medium"
-                android:text="by: Ardan Desta Vaunendra"
-                android:textColor="#1D1D1F"
-                android:textSize="13sp" />
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
@@ -566,14 +582,17 @@
                             android:background="#F5F5F7"
                             android:hint="The secret message to reveal..."
                             android:paddingHorizontal="16dp"
-                            android:textSize="14sp" />
+                            android:textSize="14sp"
+                            android:inputType="text"
+                            android:imeOptions="actionDone" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="Change target:"
-                            android:textSize="12sp" />
+                            android:text="CHANGE TARGET"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
 
                         <RadioGroup
                             android:id="@+id/rgRevealTarget"
@@ -620,8 +639,10 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Text Display Duration (Sec)"
-                                android:textSize="12sp" />
+                                android:text="TEXT DISPLAY DURATION (Sec)"
+                                android:textSize="12sp"
+                                android:textStyle="bold"
+                                />
 
                             <Button
                                 android:id="@+id/btnRevealDurationMinus"
@@ -669,7 +690,8 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Delay After Trigger (Sec)" />
+                                android:textSize="12sp"
+                                android:text="DELAY AFTER TRIGGER (Sec)" />
 
                             <Button
                                 android:id="@+id/btnRevealDelayMinus"

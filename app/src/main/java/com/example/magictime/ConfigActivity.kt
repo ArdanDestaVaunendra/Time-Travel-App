@@ -151,6 +151,24 @@ class ConfigActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupClearFocusOnDone(editText: EditText) {
+        editText.setOnEditorActionListener { v, actionId, event ->
+            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE) {
+
+                val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                imm.hideSoftInputFromWindow(v.windowToken, 0)
+
+                v.clearFocus()
+
+                binding.root.requestFocus()
+
+                true
+            } else {
+                false
+            }
+        }
+    }
+
     private fun setupLivePreview(editText: EditText, label: String) {
         editText.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
