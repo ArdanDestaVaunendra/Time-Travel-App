@@ -267,6 +267,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="48dp"
                             android:backgroundTint="#5800D1"
+                            android:textColor="#575757"
                             android:entries="@array/speed_options" />
 
                         <TextView
@@ -450,6 +451,7 @@
                             android:imeOptions="actionDone"
                             android:inputType="text"
                             android:paddingHorizontal="16dp"
+                            android:textColor="#575757"
                             android:textSize="14sp" />
 
                         <TextView
@@ -730,7 +732,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="20dp"
                             android:text="Object Scale: 100%"
-                            android:textColor="#1D1D1F"
+                            android:textColor="#575757"
                             android:textSize="12sp"
                             android:textStyle="bold" />
 
