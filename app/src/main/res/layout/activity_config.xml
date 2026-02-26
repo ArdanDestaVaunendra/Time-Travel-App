@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:background="#F5F5F7"
     android:focusable="true"
-    android:focusableInTouchMode="true" >
+    android:focusableInTouchMode="true">
 
     <LinearLayout
         android:id="@+id/topHeaderBar"
@@ -43,8 +43,8 @@
         android:id="@+id/mainScrollView"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:fillViewport="true"
         android:clipToPadding="false"
+        android:fillViewport="true"
         app:layout_constraintBottom_toTopOf="@id/bottomBar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -56,10 +56,20 @@
             android:orientation="vertical"
             android:padding="24dp">
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:layout_marginStart="4dp"
+                android:text="TIME TRAVEL EFFECT"
+                android:textColor="#86868B"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="24dp"
                 android:backgroundTint="#FFFFFF"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="0dp"
@@ -75,14 +85,14 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="TIME JUMP (Minutes)"
-                        android:textColor="#86868B"
+                        android:textColor="#1D1D1F"
                         android:textSize="12sp"
                         android:textStyle="bold" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
+                        android:layout_marginTop="12dp"
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
@@ -119,102 +129,84 @@
                             app:cornerRadius="18dp"
                             app:elevation="0dp" />
                     </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:animateLayoutChanges="true"
-                android:backgroundTint="#FFFFFF"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="0dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="20dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="DELAY START (Sec)"
-                            android:textColor="#86868B"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/tvDelayValue"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginEnd="16dp"
-                            android:text="5"
-                            android:textColor="#1D1D1F"
-                            android:textSize="24sp"
-                            android:textStyle="bold" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnDelayMinus"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:padding="0dp"
-                            android:text="-"
-                            android:textColor="#1D1D1F"
-                            app:backgroundTint="#F5F5F7"
-                            app:cornerRadius="12dp"
-                            app:elevation="0dp" />
-
-                        <View
-                            android:layout_width="8dp"
-                            android:layout_height="1dp" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnDelayPlus"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:padding="0dp"
-                            android:text="+"
-                            android:textColor="#FFFFFF"
-                            app:backgroundTint="#5800D1"
-                            app:cornerRadius="12dp"
-                            app:elevation="0dp" />
-                    </LinearLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_marginTop="16dp"
-                        android:layout_marginBottom="12dp"
-                        android:background="#F0F0F0" />
 
                     <TextView
-                        android:id="@+id/tvToggleAdvanced"
+                        android:id="@+id/tvToggleBox1"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
                         android:background="?attr/selectableItemBackground"
                         android:gravity="center"
                         android:padding="8dp"
-                        android:text="See All Custom ▾"
+                        android:text="See More ▾"
                         android:textColor="#2565D3"
-                        android:textSize="14sp"
+                        android:textSize="13sp"
                         android:textStyle="bold" />
 
                     <LinearLayout
-                        android:id="@+id/layoutAdvancedOptions"
+                        android:id="@+id/layoutHiddenBox1"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
                         android:visibility="gone">
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginBottom="16dp"
+                            android:background="#F0F0F0" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="DELAY START (Sec)"
+                                android:textColor="#1D1D1F"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tvDelayValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginEnd="16dp"
+                                android:text="5"
+                                android:textColor="#1D1D1F"
+                                android:textSize="20sp"
+                                android:textStyle="bold" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnDelayMinus"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:padding="0dp"
+                                android:text="-"
+                                android:textColor="#1D1D1F"
+                                app:backgroundTint="#F5F5F7"
+                                app:cornerRadius="12dp"
+                                app:elevation="0dp" />
+
+                            <View
+                                android:layout_width="8dp"
+                                android:layout_height="1dp" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnDelayPlus"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:padding="0dp"
+                                android:text="+"
+                                android:textColor="#FFFFFF"
+                                app:backgroundTint="#5800D1"
+                                app:cornerRadius="12dp"
+                                app:elevation="0dp" />
+                        </LinearLayout>
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -222,7 +214,7 @@
                             android:layout_marginTop="16dp"
                             android:layout_marginBottom="8dp"
                             android:text="TRIGGER METHOD"
-                            android:textColor="#86868B"
+                            android:textColor="#1D1D1F"
                             android:textSize="12sp"
                             android:textStyle="bold" />
 
@@ -236,7 +228,6 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:checked="true"
-                                android:fontFamily="sans-serif"
                                 android:text="Volume Button (down)"
                                 android:textColor="#1D1D1F"
                                 app:buttonTint="#5800D1" />
@@ -250,19 +241,24 @@
                                 app:buttonTint="#5800D1" />
                         </RadioGroup>
 
-                        <View
+                        <TextView
+                            android:id="@+id/tvTriggerInfo"
                             android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:layout_marginTop="16dp"
-                            android:layout_marginBottom="16dp"
-                            android:background="#F0F0F0" />
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:background="#FFF9C4"
+                            android:padding="8dp"
+                            android:text="Info: Trigger is the opposite of Time Trigger."
+                            android:textColor="#BC5100"
+                            android:textSize="11sp" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="16dp"
                             android:layout_marginBottom="8dp"
                             android:text="TIME FLOW SPEED"
-                            android:textColor="#86868B"
+                            android:textColor="#1D1D1F"
                             android:textSize="12sp"
                             android:textStyle="bold" />
 
@@ -270,22 +266,16 @@
                             android:id="@+id/spinnerTimeSpeed"
                             android:layout_width="match_parent"
                             android:layout_height="48dp"
-                            android:layout_marginBottom="16dp"
                             android:backgroundTint="#5800D1"
                             android:entries="@array/speed_options" />
-
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:layout_marginBottom="16dp"
-                            android:background="#F0F0F0" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="16dp"
                             android:layout_marginBottom="8dp"
                             android:text="TIME FORMAT"
-                            android:textColor="#86868B"
+                            android:textColor="#1D1D1F"
                             android:textSize="12sp"
                             android:textStyle="bold" />
 
@@ -314,109 +304,81 @@
                                 android:textColor="#1D1D1F"
                                 app:buttonTint="#5800D1" />
                         </RadioGroup>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:layout_marginTop="16dp"
-                            android:layout_marginBottom="16dp"
-                            android:background="#F0F0F0" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="8dp"
-                            android:text="DATE LANGUAGE"
-                            android:textColor="#86868B"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:layout_marginStart="4dp"
+                android:text="PIN &amp; SECRET MESSAGE"
+                android:textColor="#86868B"
+                android:textSize="12sp"
+                android:textStyle="bold" />
 
-                        <RadioGroup
-                            android:id="@+id/rgDateLanguage"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal">
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:backgroundTint="#FFFFFF"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp">
 
-                            <RadioButton
-                                android:id="@+id/rbLangID"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:checked="true"
-                                android:text="ID (Sab, 24 Jan)"
-                                android:textColor="#1D1D1F"
-                                app:buttonTint="#5800D1" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
 
-                            <RadioButton
-                                android:id="@+id/rbLangEN"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="EN (Sat, Jan 24)"
-                                android:textColor="#1D1D1F"
-                                app:buttonTint="#5800D1" />
-                        </RadioGroup>
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchEnablePin"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="4dp"
+                        android:checked="true"
+                        android:text="Require PIN to Unlock"
+                        android:textColor="#1D1D1F"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        app:thumbTint="@color/switch_thumb_color"
+                        app:trackTint="@color/switch_track_color" />
 
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:layout_marginTop="16dp"
-                            android:layout_marginBottom="16dp"
-                            android:background="#F0F0F0" />
+                    <EditText
+                        android:id="@+id/etCustomPin"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:background="#F5F5F7"
+                        android:hint="Set 6-Digit PIN (e.g. 123456)"
+                        android:imeOptions="actionDone"
+                        android:inputType="numberPassword"
+                        android:maxLength="6"
+                        android:paddingHorizontal="16dp"
+                        android:textColor="#575757"
+                        android:textSize="14sp" />
 
-                        <com.google.android.material.switchmaterial.SwitchMaterial
-                            android:id="@+id/switchShowCarrier"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="8dp"
-                            android:checked="true"
-                            android:text="SHOW OPERATOR TEXT"
-                            android:textColor="#86868B"
-                            android:textSize="12sp"
-                            android:textStyle="bold"
-                            app:thumbTint="@color/switch_thumb_color"
-                            app:trackTint="@color/switch_track_color" />
+                    <TextView
+                        android:id="@+id/tvToggleBox2"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:text="See More ▾"
+                        android:textColor="#2565D3"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
 
-                        <EditText
-                            android:id="@+id/etCustomCarrier"
-                            android:layout_width="match_parent"
-                            android:layout_height="50dp"
-                            android:layout_marginBottom="12dp"
-                            android:background="#F5F5F7"
-                            android:hint="Operator (e.g. TELKOMSEL)"
-                            android:imeOptions="actionDone"
-                            android:inputType="textCapCharacters"
-                            android:maxLines="1"
-                            android:paddingHorizontal="16dp"
-                            android:textColor="#575757"
-                            android:textSize="14sp" />
-
-                        <com.google.android.material.switchmaterial.SwitchMaterial
-                            android:id="@+id/switchShowMarquee"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="8dp"
-                            android:checked="true"
-                            android:text="SHOW RUNNING TEXT"
-                            android:textColor="#86868B"
-                            android:textSize="12sp"
-                            android:textStyle="bold"
-                            app:thumbTint="@color/switch_thumb_color"
-                            app:trackTint="@color/switch_track_color" />
-
-                        <EditText
-                            android:id="@+id/etCustomMarquee"
-                            android:layout_width="match_parent"
-                            android:layout_height="50dp"
-                            android:layout_marginBottom="16dp"
-                            android:background="#F5F5F7"
-                            android:hint="Running Text (Bottom)"
-                            android:imeOptions="actionDone"
-                            android:inputType="text"
-                            android:maxLines="1"
-                            android:paddingHorizontal="16dp"
-                            android:textColor="#575757"
-                            android:textSize="14sp" />
+                    <LinearLayout
+                        android:id="@+id/layoutHiddenBox2"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone">
 
                         <View
                             android:layout_width="match_parent"
@@ -427,100 +389,9 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginBottom="12dp"
-                            android:text="STATUS BAR ICONS"
-                            android:textColor="#86868B"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
-
-                        <com.google.android.material.switchmaterial.SwitchMaterial
-                            android:id="@+id/switchShowWifi"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
                             android:layout_marginBottom="8dp"
-                            android:checked="true"
-                            android:text="Show Wifi Icon"
-                            android:textColor="#1D1D1F"
-                            android:textSize="12sp"
-                            android:textStyle="bold"
-                            app:thumbTint="@color/switch_thumb_color"
-                            app:trackTint="@color/switch_track_color" />
-
-                        <com.google.android.material.switchmaterial.SwitchMaterial
-                            android:id="@+id/switchSignal1"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="8dp"
-                            android:checked="true"
-                            android:text="SIM 1: Show 4G"
-                            android:textColor="#1D1D1F"
-                            android:textSize="12sp"
-                            android:textStyle="bold"
-                            app:thumbTint="@color/switch_thumb_color"
-                            app:trackTint="@color/switch_track_color" />
-
-                        <com.google.android.material.switchmaterial.SwitchMaterial
-                            android:id="@+id/switchSignal2"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="8dp"
-                            android:checked="false"
-                            android:text="SIM 2: Show 4G"
-                            android:textColor="#1D1D1F"
-                            android:textSize="12sp"
-                            android:textStyle="bold"
-                            app:thumbTint="@color/switch_thumb_color"
-                            app:trackTint="@color/switch_track_color" />
-
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:layout_marginTop="16dp"
-                            android:layout_marginBottom="16dp"
-                            android:background="#F0F0F0" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="8dp"
-                            android:text="SECURITY (UNLOCK METHOD)"
-                            android:textColor="#86868B"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
-
-                        <com.google.android.material.switchmaterial.SwitchMaterial
-                            android:id="@+id/switchEnablePin"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="4dp"
-                            android:checked="true"
-                            android:text="Require PIN to Unlock"
-                            android:textColor="#1D1D1F"
-                            android:textSize="14sp"
-                            android:textStyle="bold"
-                            app:thumbTint="@color/switch_thumb_color"
-                            app:trackTint="@color/switch_track_color" />
-
-                        <EditText
-                            android:id="@+id/etCustomPin"
-                            android:layout_width="match_parent"
-                            android:layout_height="50dp"
-                            android:layout_marginBottom="16dp"
-                            android:background="#F5F5F7"
-                            android:hint="Set 6-Digit PIN (e.g. 123456)"
-                            android:imeOptions="actionDone"
-                            android:inputType="numberPassword"
-                            android:maxLength="6"
-                            android:paddingHorizontal="16dp"
-                            android:textColor="#575757"
-                            android:textSize="14sp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
                             android:text="PREDICTION LANGUAGE"
-                            android:textColor="#86868B"
+                            android:textColor="#1D1D1F"
                             android:textSize="12sp"
                             android:textStyle="bold" />
 
@@ -528,8 +399,7 @@
                             android:id="@+id/rgPredictionLang"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:layout_marginBottom="8dp">
+                            android:orientation="horizontal">
 
                             <RadioButton
                                 android:id="@+id/rbPredLangID"
@@ -546,7 +416,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="EN (Ace of Spades)"
+                                android:text="EN (Ace)"
                                 android:textColor="#1D1D1F"
                                 app:buttonTint="#5800D1" />
                         </RadioGroup>
@@ -558,20 +428,14 @@
                             android:layout_marginBottom="16dp"
                             android:background="#F0F0F0" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="MAGIC REVELATION (SECRET MESSAGE)"
-                            android:textColor="#86868B"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
-
                         <com.google.android.material.switchmaterial.SwitchMaterial
                             android:id="@+id/switchEnableReveal"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="Enable Secret Message"
                             android:textColor="#1D1D1F"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
                             app:thumbTint="@color/switch_thumb_color"
                             app:trackTint="@color/switch_track_color" />
 
@@ -579,18 +443,21 @@
                             android:id="@+id/etRevealText"
                             android:layout_width="match_parent"
                             android:layout_height="50dp"
+                            android:layout_marginTop="8dp"
+                            android:layout_marginBottom="16dp"
                             android:background="#F5F5F7"
                             android:hint="The secret message to reveal..."
-                            android:paddingHorizontal="16dp"
-                            android:textSize="14sp"
+                            android:imeOptions="actionDone"
                             android:inputType="text"
-                            android:imeOptions="actionDone" />
+                            android:paddingHorizontal="16dp"
+                            android:textSize="14sp" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
+                            android:layout_marginBottom="8dp"
                             android:text="CHANGE TARGET"
+                            android:textColor="#1D1D1F"
                             android:textSize="12sp"
                             android:textStyle="bold" />
 
@@ -598,6 +465,7 @@
                             android:id="@+id/rgRevealTarget"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:layout_marginBottom="16dp"
                             android:orientation="horizontal">
 
                             <RadioButton
@@ -606,7 +474,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:text="Carrier"
-                                android:textSize="12sp"
+                                android:textColor="#1D1D1F"
                                 app:buttonTint="#5800D1" />
 
                             <RadioButton
@@ -615,7 +483,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:text="Marquee"
-                                android:textSize="12sp"
+                                android:textColor="#1D1D1F"
                                 app:buttonTint="#5800D1" />
 
                             <RadioButton
@@ -624,14 +492,13 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:text="Both"
-                                android:textSize="12sp"
+                                android:textColor="#1D1D1F"
                                 app:buttonTint="#5800D1" />
                         </RadioGroup>
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
                             android:gravity="center_vertical"
                             android:orientation="horizontal">
 
@@ -639,10 +506,10 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="TEXT DISPLAY DURATION (Sec)"
+                                android:text="DISPLAY DURATION (Sec)"
+                                android:textColor="#1D1D1F"
                                 android:textSize="12sp"
-                                android:textStyle="bold"
-                                />
+                                android:textStyle="bold" />
 
                             <Button
                                 android:id="@+id/btnRevealDurationMinus"
@@ -682,7 +549,7 @@
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
+                            android:layout_marginTop="16dp"
                             android:gravity="center_vertical"
                             android:orientation="horizontal">
 
@@ -690,8 +557,10 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
+                                android:text="DELAY AFTER TRIGGER (Sec)"
+                                android:textColor="#1D1D1F"
                                 android:textSize="12sp"
-                                android:text="DELAY AFTER TRIGGER (Sec)" />
+                                android:textStyle="bold" />
 
                             <Button
                                 android:id="@+id/btnRevealDelayMinus"
@@ -725,30 +594,27 @@
                                 android:textSize="18sp"
                                 app:backgroundTint="#5800D1"
                                 app:cornerRadius="12dp"
-                                app:elevation="0dp"
-                                app:iconPadding="0dp" />
+                                app:elevation="0dp" />
                         </LinearLayout>
-
-                        <TextView
-                            android:id="@+id/tvTriggerInfo"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:background="#FFF9C4"
-                            android:padding="8dp"
-                            android:text="Info: Trigger is the opposite of Time Trigger."
-                            android:textColor="#BC5100"
-                            android:textSize="11sp" />
-
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:layout_marginStart="4dp"
+                android:text="AR FLOAT EFFECT"
+                android:textColor="#86868B"
+                android:textSize="12sp"
+                android:textStyle="bold" />
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="24dp"
-                android:backgroundTint="#FFFFFF"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp">
@@ -756,39 +622,418 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="16dp">
+                    android:orientation="vertical"
+                    android:padding="20dp">
 
-                    <ImageView
-                        android:id="@+id/imgPreview"
-                        android:layout_width="40dp"
-                        android:layout_height="60dp"
-                        android:background="#EEE"
-                        android:scaleType="centerCrop" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Enable AR Float Effect"
+                            android:textColor="#1D1D1F"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchFloatEffect"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            app:thumbTint="@color/switch_thumb_color"
+                            app:trackTint="@color/switch_track_color" />
+                    </LinearLayout>
 
                     <TextView
-                        android:layout_width="0dp"
+                        android:id="@+id/tvToggleBox3"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:paddingStart="16dp"
-                        android:text="Change Wallpaper"
+                        android:layout_marginTop="12dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:text="See More ▾"
+                        android:textColor="#2565D3"
+                        android:textSize="13sp"
                         android:textStyle="bold" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnPickWallpaper"
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:id="@+id/layoutHiddenBox3"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Pick"
-                        android:textColor="#1D1D1F"
-                        app:backgroundTint="#F5F5F7"
-                        app:elevation="0dp" />
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginBottom="16dp"
+                            android:background="#F0F0F0" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="16dp"
+                            android:text="Trigger: Volume Up. Blocks all other gestures."
+                            android:textColor="#86868B"
+                            android:textSize="12sp" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Override with Custom Gallery"
+                                android:textColor="#1D1D1F"
+                                android:textSize="14sp" />
+
+                            <com.google.android.material.switchmaterial.SwitchMaterial
+                                android:id="@+id/switchImageSource"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                app:thumbTint="@color/switch_thumb_color"
+                                app:trackTint="@color/switch_track_color" />
+                        </LinearLayout>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnInsertFloatImage"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="16dp"
+                            android:text="Pick from Gallery"
+                            android:textAllCaps="false"
+                            android:visibility="gone"
+                            app:backgroundTint="#8A2BE2"
+                            app:cornerRadius="12dp" />
+
+                        <ImageView
+                            android:id="@+id/imgFloatPreview"
+                            android:layout_width="120dp"
+                            android:layout_height="160dp"
+                            android:layout_gravity="center_horizontal"
+                            android:layout_marginTop="16dp"
+                            android:scaleType="centerInside"
+                            android:visibility="gone" />
+
+                        <TextView
+                            android:id="@+id/tvFloatSizeLabel"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="20dp"
+                            android:text="Object Scale: 100%"
+                            android:textColor="#1D1D1F"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <androidx.appcompat.widget.AppCompatSeekBar
+                            android:id="@+id/seekBarFloatSize"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:layout_marginBottom="16dp"
+                            android:max="200"
+                            android:progress="100"
+                            android:progressTint="#8A2BE2"
+                            android:thumbTint="#8A2BE2" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="APPEARANCE DELAY (Sec)"
+                                android:textColor="#1D1D1F"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnMinusFloatDelay"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:padding="0dp"
+                                android:text="-"
+                                android:textColor="#1D1D1F"
+                                android:textSize="18sp"
+                                app:backgroundTint="#F5F5F7"
+                                app:cornerRadius="12dp"
+                                app:elevation="0dp" />
+
+                            <TextView
+                                android:id="@+id/tvFloatDelayValue"
+                                android:layout_width="40dp"
+                                android:layout_height="wrap_content"
+                                android:gravity="center"
+                                android:text="0s"
+                                android:textColor="#1D1D1F"
+                                android:textSize="18sp"
+                                android:textStyle="bold" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnPlusFloatDelay"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:padding="0dp"
+                                android:text="+"
+                                android:textColor="#FFFFFF"
+                                android:textSize="18sp"
+                                app:backgroundTint="#8A2BE2"
+                                app:cornerRadius="12dp"
+                                app:elevation="0dp" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:layout_marginStart="4dp"
+                android:text="GENERAL SETTINGS"
+                android:textColor="#86868B"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:id="@+id/imgPreview"
+                            android:layout_width="32dp"
+                            android:layout_height="48dp"
+                            android:background="#F5F5F7"
+                            android:scaleType="centerCrop" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:paddingStart="16dp"
+                            android:text="Lockscreen Wallpaper"
+                            android:textColor="#1D1D1F"
+                            android:textStyle="bold" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnPickWallpaper"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Pick"
+                            android:textAllCaps="false"
+                            android:textColor="#1D1D1F"
+                            app:backgroundTint="#F5F5F7"
+                            app:cornerRadius="12dp"
+                            app:elevation="0dp" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tvToggleBox4"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:text="See More ▾"
+                        android:textColor="#2565D3"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:id="@+id/layoutHiddenBox4"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginBottom="16dp"
+                            android:background="#F0F0F0" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
+                            android:text="DATE LANGUAGE"
+                            android:textColor="#1D1D1F"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <RadioGroup
+                            android:id="@+id/rgDateLanguage"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="16dp"
+                            android:orientation="horizontal">
+
+                            <RadioButton
+                                android:id="@+id/rbLangID"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:checked="true"
+                                android:text="ID (Sab, 24 Jan)"
+                                android:textColor="#1D1D1F"
+                                app:buttonTint="#5800D1" />
+
+                            <RadioButton
+                                android:id="@+id/rbLangEN"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="EN (Sat, Jan 24)"
+                                android:textColor="#1D1D1F"
+                                app:buttonTint="#5800D1" />
+                        </RadioGroup>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginBottom="16dp"
+                            android:background="#F0F0F0" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="12dp"
+                            android:text="STATUS BAR ICONS"
+                            android:textColor="#1D1D1F"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchShowWifi"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
+                            android:checked="true"
+                            android:text="Show Wifi Icon"
+                            android:textColor="#1D1D1F"
+                            android:textSize="14sp"
+                            app:thumbTint="@color/switch_thumb_color"
+                            app:trackTint="@color/switch_track_color" />
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchSignal1"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
+                            android:checked="true"
+                            android:text="SIM 1: Show 4G"
+                            android:textColor="#1D1D1F"
+                            android:textSize="14sp"
+                            app:thumbTint="@color/switch_thumb_color"
+                            app:trackTint="@color/switch_track_color" />
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchSignal2"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="16dp"
+                            android:checked="false"
+                            android:text="SIM 2: Show 4G"
+                            android:textColor="#1D1D1F"
+                            android:textSize="14sp"
+                            app:thumbTint="@color/switch_thumb_color"
+                            app:trackTint="@color/switch_track_color" />
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginBottom="16dp"
+                            android:background="#F0F0F0" />
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchShowCarrier"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
+                            android:checked="true"
+                            android:text="SHOW OPERATOR TEXT"
+                            android:textColor="#1D1D1F"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            app:thumbTint="@color/switch_thumb_color"
+                            app:trackTint="@color/switch_track_color" />
+
+                        <EditText
+                            android:id="@+id/etCustomCarrier"
+                            android:layout_width="match_parent"
+                            android:layout_height="50dp"
+                            android:layout_marginBottom="16dp"
+                            android:background="#F5F5F7"
+                            android:hint="Operator (e.g. TELKOMSEL)"
+                            android:imeOptions="actionDone"
+                            android:inputType="textCapCharacters"
+                            android:maxLines="1"
+                            android:paddingHorizontal="16dp"
+                            android:textColor="#575757"
+                            android:textSize="14sp" />
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchShowMarquee"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
+                            android:checked="true"
+                            android:text="SHOW RUNNING TEXT"
+                            android:textColor="#1D1D1F"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            app:thumbTint="@color/switch_thumb_color"
+                            app:trackTint="@color/switch_track_color" />
+
+                        <EditText
+                            android:id="@+id/etCustomMarquee"
+                            android:layout_width="match_parent"
+                            android:layout_height="50dp"
+                            android:background="#F5F5F7"
+                            android:hint="Running Text (Bottom)"
+                            android:imeOptions="actionDone"
+                            android:inputType="text"
+                            android:maxLines="1"
+                            android:paddingHorizontal="16dp"
+                            android:textColor="#575757"
+                            android:textSize="14sp" />
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <View
                 android:layout_width="match_parent"
-                android:layout_height="24dp" />
+                android:layout_height="100dp" />
 
         </LinearLayout>
     </ScrollView>

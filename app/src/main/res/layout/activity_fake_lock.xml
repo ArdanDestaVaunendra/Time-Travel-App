@@ -257,9 +257,10 @@
 
         <ImageView
             android:id="@+id/ivLockIcon"
-            android:layout_width="16dp"
-            android:layout_height="16dp"
-            android:layout_marginTop="45dp"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_marginTop="21dp"
+            android:padding="24dp"
             android:src="@drawable/ic_lock"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -496,5 +497,17 @@
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <ImageView
+        android:id="@+id/imgFloatObject"
+        android:layout_width="220dp"
+        android:layout_height="300dp"
+        android:visibility="gone"
+        android:elevation="100dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:scaleType="centerInside" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
