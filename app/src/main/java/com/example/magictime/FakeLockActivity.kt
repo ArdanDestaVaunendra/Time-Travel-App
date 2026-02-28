@@ -111,8 +111,8 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     private var isBeingDragged = false
     private var velX = 0f
     private var velY = 0f
-    private val friction = 0.80f
-    private val sensitivity = 1.20f
+    private var friction = 0.65f
+    private var sensitivity = 1.00f
 
     // === BATTERY RECEIVER ===
     private val batteryReceiver: BroadcastReceiver = object : BroadcastReceiver() {
@@ -994,6 +994,22 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                 }
             } catch (t: Throwable) {
                 prefs.edit().remove("FORCED_FLOAT_CARD").apply()
+            }
+        }
+
+        val speedMode = fPrefs.getString("FLOAT_SPEED_MODE", "MEDIUM")
+        when (speedMode) {
+            "SLOW" -> {
+                friction = 0.50f
+                sensitivity = 0.75f
+            }
+            "FAST" -> {
+                friction = 0.80f
+                sensitivity = 1.20f
+            }
+            else -> {
+                friction = 0.65f
+                sensitivity = 1.00f
             }
         }
 

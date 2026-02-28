@@ -171,14 +171,14 @@ class ConfigActivity : AppCompatActivity() {
         binding.btnMinusFloatDelay.setOnClickListener {
             if (currentFloatDelay > 0) {
                 currentFloatDelay--
-                binding.tvFloatDelayValue.text = "${currentFloatDelay}s"
+                binding.tvFloatDelayValue.text = "${currentFloatDelay}"
             }
         }
 
         binding.btnPlusFloatDelay.setOnClickListener {
-            if (currentFloatDelay < 15) {
+            if (currentFloatDelay < 30) {
                 currentFloatDelay++
-                binding.tvFloatDelayValue.text = "${currentFloatDelay}s"
+                binding.tvFloatDelayValue.text = "${currentFloatDelay}"
             }
         }
 
@@ -379,7 +379,7 @@ class ConfigActivity : AppCompatActivity() {
         binding.seekBarFloatSize.progress = fPrefs.getInt("FLOAT_SCALE", 75)
 
         currentFloatDelay = fPrefs.getInt("FLOAT_DELAY", 0)
-        binding.tvFloatDelayValue.text = "${currentFloatDelay}s"
+        binding.tvFloatDelayValue.text = "${currentFloatDelay}"
 
         isUsingGalleryMode = fPrefs.getBoolean("IS_GALLERY_MODE", false)
         binding.switchImageSource.isChecked = isUsingGalleryMode
@@ -401,6 +401,13 @@ class ConfigActivity : AppCompatActivity() {
                 binding.framePhonePreview.visibility = View.GONE
             }
         }
+
+        val speedMode = fPrefs.getString("FLOAT_SPEED_MODE", "MEDIUM")
+        when (speedMode) {
+            "SLOW" -> binding.rbSpeedSlow.isChecked = true
+            "FAST" -> binding.rbSpeedFast.isChecked = true
+            else -> binding.rbSpeedMedium.isChecked = true
+        }
     }
 
     private fun saveFloatSettings() {
@@ -411,6 +418,13 @@ class ConfigActivity : AppCompatActivity() {
 
         editor.putBoolean("IS_GALLERY_MODE", isUsingGalleryMode)
         editor.putString("FLOAT_CUSTOM_URI", customImageUriString)
+
+        val speedMode = when (binding.rgFloatSpeed.checkedRadioButtonId) {
+            R.id.rbSpeedSlow -> "SLOW"
+            R.id.rbSpeedFast -> "FAST"
+            else -> "MEDIUM"
+        }
+        editor.putString("FLOAT_SPEED_MODE", speedMode)
 
         editor.remove("FLOAT_STOCK_INDEX")
         editor.apply()

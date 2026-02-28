@@ -842,56 +842,124 @@
                                     android:scaleType="fitXY" />
                             </FrameLayout>
                         </LinearLayout>
-                        <LinearLayout
+
+                        <com.google.android.material.card.MaterialCardView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:gravity="center_vertical"
-                            android:layout_marginTop="24dp"
-                            android:orientation="horizontal">
+                            android:layout_marginTop="16dp"
+                            app:cardBackgroundColor="#F5F5F7"
+                            app:cardCornerRadius="12dp"
+                            app:cardElevation="0dp"
+                            app:strokeWidth="0dp">
 
-                            <TextView
-                                android:layout_width="0dp"
+                            <LinearLayout
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="APPEARANCE DELAY (Sec)"
-                                android:textColor="#1D1D1F"
-                                android:textSize="12sp"
-                                android:textStyle="bold" />
+                                android:orientation="vertical"
+                                android:paddingHorizontal="16dp"
+                                android:paddingVertical="12dp">
 
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/btnMinusFloatDelay"
-                                android:layout_width="40dp"
-                                android:layout_height="40dp"
-                                android:padding="0dp"
-                                android:text="-"
-                                android:textColor="#1D1D1F"
-                                android:textSize="18sp"
-                                app:backgroundTint="#F5F5F7"
-                                app:cornerRadius="12dp"
-                                app:elevation="0dp" />
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginBottom="8dp"
+                                    android:text="OBJECT MOVEMENT SPEED"
+                                    android:textColor="#1D1D1F"
+                                    android:textSize="12sp"
+                                    android:textStyle="bold" />
 
-                            <TextView
-                                android:id="@+id/tvFloatDelayValue"
-                                android:layout_width="40dp"
-                                android:layout_height="wrap_content"
-                                android:gravity="center"
-                                android:text="0s"
-                                android:textColor="#1D1D1F"
-                                android:textSize="18sp"
-                                android:textStyle="bold" />
+                                <RadioGroup
+                                    android:id="@+id/rgFloatSpeed"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal">
 
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/btnPlusFloatDelay"
-                                android:layout_width="40dp"
-                                android:layout_height="40dp"
-                                android:padding="0dp"
-                                android:text="+"
-                                android:textColor="#FFFFFF"
-                                android:textSize="18sp"
-                                app:backgroundTint="#8A2BE2"
-                                app:cornerRadius="12dp"
-                                app:elevation="0dp" />
-                        </LinearLayout>
+                                    <RadioButton
+                                        android:id="@+id/rbSpeedSlow"
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:text="Slow"
+                                        android:textColor="#1D1D1F"
+                                        app:buttonTint="#5800D1" />
+
+                                    <RadioButton
+                                        android:id="@+id/rbSpeedMedium"
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:checked="true"
+                                        android:text="Medium"
+                                        android:textColor="#1D1D1F"
+                                        app:buttonTint="#5800D1" />
+
+                                    <RadioButton
+                                        android:id="@+id/rbSpeedFast"
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:text="Fast"
+                                        android:textColor="#1D1D1F"
+                                        app:buttonTint="#5800D1" />
+                                </RadioGroup>
+
+                                <View
+                                    android:layout_width="match_parent"
+                                    android:layout_height="1dp"
+                                    android:layout_marginVertical="12dp"
+                                    android:background="#EAEAEA" />
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="center_vertical"
+                                    android:orientation="horizontal">
+
+                                    <TextView
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:text="Delay (Sec)"
+                                        android:textColor="#1D1D1F"
+                                        android:textSize="12sp"
+                                        android:textStyle="bold" />
+
+                                    <com.google.android.material.button.MaterialButton
+                                        android:id="@+id/btnMinusFloatDelay"
+                                        android:layout_width="40dp"
+                                        android:layout_height="40dp"
+                                        android:padding="0dp"
+                                        android:text="-"
+                                        android:textColor="#1D1D1F"
+                                        android:textSize="18sp"
+                                        app:backgroundTint="#EAEAEA"
+                                        app:cornerRadius="12dp"
+                                        app:elevation="0dp" />
+
+                                    <TextView
+                                        android:id="@+id/tvFloatDelayValue"
+                                        android:layout_width="40dp"
+                                        android:layout_height="wrap_content"
+                                        android:gravity="center"
+                                        android:text="0"
+                                        android:textColor="#1D1D1F"
+                                        android:textSize="18sp"
+                                        android:textStyle="bold" />
+
+                                    <com.google.android.material.button.MaterialButton
+                                        android:id="@+id/btnPlusFloatDelay"
+                                        android:layout_width="40dp"
+                                        android:layout_height="40dp"
+                                        android:padding="0dp"
+                                        android:text="+"
+                                        android:textColor="#FFFFFF"
+                                        android:textSize="18sp"
+                                        app:backgroundTint="#8A2BE2"
+                                        app:cornerRadius="12dp"
+                                        app:elevation="0dp" />
+                                </LinearLayout>
+                            </LinearLayout>
+                        </com.google.android.material.card.MaterialCardView>
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
