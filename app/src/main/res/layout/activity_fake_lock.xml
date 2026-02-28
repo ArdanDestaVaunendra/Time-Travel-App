@@ -68,7 +68,7 @@
                 android:layout_width="12dp"
                 android:layout_height="14dp"
                 android:layout_marginEnd="2dp"
-                android:src="@drawable/ic_signal"
+                android:src="@drawable/ic_4g"
                 app:tint="#FFFFFF" />
 
             <ImageView
@@ -91,7 +91,7 @@
                 android:layout_width="12dp"
                 android:layout_height="14dp"
                 android:layout_marginEnd="2dp"
-                android:src="@drawable/ic_signal"
+                android:src="@drawable/ic_4g"
                 app:tint="#FFFFFF" />
 
             <ImageView

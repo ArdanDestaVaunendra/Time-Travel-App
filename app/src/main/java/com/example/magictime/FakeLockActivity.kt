@@ -112,7 +112,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     private var velX = 0f
     private var velY = 0f
     private val friction = 0.80f
-    private val sensitivity = 0.70f
+    private val sensitivity = 1.20f
 
     // === BATTERY RECEIVER ===
     private val batteryReceiver: BroadcastReceiver = object : BroadcastReceiver() {
@@ -216,20 +216,35 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         binding.tvMarqueeBottom.visibility = if (showMarquee) View.VISIBLE else View.INVISIBLE
         binding.tvMarqueeBottom.text = prefs.getString("CUSTOM_MARQUEE", "custom text here")
 
-        binding.ivWifi.visibility = if (prefs.getBoolean("SHOW_WIFI", true)) View.VISIBLE else View.GONE
+        // --- LOGIC WIFI & 4G/5G ---
+        val isWifiOn = prefs.getBoolean("SHOW_WIFI", true)
+        binding.ivWifi.visibility = if (isWifiOn) View.VISIBLE else View.GONE
 
         val plainColor = Color.parseColor("#4BFFFFFF")
+        val use5G = prefs.getBoolean("USE_5G", false)
+        val networkIconRes = if (use5G) R.drawable.ic_5g else R.drawable.ic_4g
 
-        if (prefs.getBoolean("SIM1_4G", true)) {
-            binding.iv4g1.visibility = View.VISIBLE; binding.ivSignal1.clearColorFilter()
-        } else {
-            binding.iv4g1.visibility = View.GONE; binding.ivSignal1.setColorFilter(plainColor)
-        }
+        binding.iv4g1.setImageResource(networkIconRes)
+        binding.iv4g2.setImageResource(networkIconRes)
 
-        if (prefs.getBoolean("SIM2_4G", false)) {
-            binding.iv4g2.visibility = View.VISIBLE; binding.ivSignal2.clearColorFilter()
+        if (isWifiOn) {
+            binding.iv4g1.visibility = View.GONE
+            binding.ivSignal1.setColorFilter(plainColor)
+
+            binding.iv4g2.visibility = View.GONE
+            binding.ivSignal2.setColorFilter(plainColor)
         } else {
-            binding.iv4g2.visibility = View.GONE; binding.ivSignal2.setColorFilter(plainColor)
+            if (prefs.getBoolean("SIM1_4G", true)) {
+                binding.iv4g1.visibility = View.VISIBLE; binding.ivSignal1.clearColorFilter()
+            } else {
+                binding.iv4g1.visibility = View.GONE; binding.ivSignal1.setColorFilter(plainColor)
+            }
+
+            if (prefs.getBoolean("SIM2_4G", false)) {
+                binding.iv4g2.visibility = View.VISIBLE; binding.ivSignal2.clearColorFilter()
+            } else {
+                binding.iv4g2.visibility = View.GONE; binding.ivSignal2.setColorFilter(plainColor)
+            }
         }
 
         isCardCodeEnabled = prefs.getBoolean("ENABLE_CARD_CODE", true) // Note: Flag is loaded but consider using it if needed in future logic
@@ -401,6 +416,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
+                    touchStartX = event.rawX
                     touchStartY = event.rawY
                     isSwipingForUnlock = true
                     true
@@ -408,9 +424,14 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                 MotionEvent.ACTION_MOVE -> {
                     if (!isSwipingForUnlock) return@setOnTouchListener false
 
+                    val deltaX = touchStartX - event.rawX
                     val deltaY = touchStartY - event.rawY
-                    if (deltaY > 0) {
-                        val progress = (deltaY / (screenHeight / 1.5f)).coerceIn(0f, 1f)
+
+                    val isSwipeDown = deltaY < 0 && Math.abs(deltaY) > Math.abs(deltaX)
+
+                    if (!isSwipeDown) {
+                        val distance = Math.hypot(deltaX.toDouble(), deltaY.toDouble()).toFloat()
+                        val progress = (distance / (screenHeight / 1.5f)).coerceIn(0f, 1f)
                         applyInteractiveAnimation(progress)
                     }
                     true
@@ -419,12 +440,15 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                     if (!isSwipingForUnlock) return@setOnTouchListener false
                     isSwipingForUnlock = false
 
+                    val deltaX = touchStartX - event.rawX
                     val deltaY = touchStartY - event.rawY
+                    val distance = Math.hypot(deltaX.toDouble(), deltaY.toDouble()).toFloat()
 
-                    if (deltaY > screenHeight * swipeThreshold) {
+                    val isSwipeDown = deltaY < 0 && Math.abs(deltaY) > Math.abs(deltaX)
+
+                    if (distance > screenHeight * swipeThreshold && !isSwipeDown) {
                         if (isPinEnabled) {
-                            performUnlock()
-                            resetUnlockAnimation()
+                            animateLockscreenToPinView()
                         } else {
                             finishUnlockWithAnimation()
                         }
@@ -715,6 +739,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         binding.tvEnterPinLabel.visibility = View.VISIBLE
         binding.tvPinInfoLabel.visibility = View.VISIBLE
         binding.pinIndicatorsLayout.visibility = View.INVISIBLE
+
         binding.pinScreenContainer.visibility = View.VISIBLE
         binding.pinScreenContainer.alpha = 0f
         binding.pinScreenContainer.translationY = 0f
@@ -723,7 +748,8 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         binding.bottomKeypadContainer.scaleX = startScale; binding.bottomKeypadContainer.scaleY = startScale; binding.bottomKeypadContainer.alpha = 0f
         binding.tvEnterPinLabel.scaleX = startScale; binding.tvEnterPinLabel.scaleY = startScale; binding.tvEnterPinLabel.alpha = 0f
         binding.tvPinInfoLabel.scaleX = startScale; binding.tvPinInfoLabel.scaleY = startScale; binding.tvPinInfoLabel.alpha = 0f
-        binding.ivLockIcon.scaleX = 1f; binding.ivLockIcon.scaleY = 1f; binding.ivLockIcon.alpha = 0f
+
+        binding.ivLockIcon.scaleX = startScale; binding.ivLockIcon.scaleY = startScale; binding.ivLockIcon.alpha = 0f
 
         blurredWallpaperBitmap?.let {
             binding.imgPinBackgroundBlurred.setImageBitmap(it)
@@ -734,8 +760,11 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         val popInterpolator = OvershootInterpolator(1.2f)
         val fadeInterpolator = DecelerateInterpolator()
 
-        binding.pinScreenContainer.animate().alpha(1f).setDuration(duration).setInterpolator(fadeInterpolator).start()
-        binding.ivLockIcon.animate().alpha(1f).setDuration(duration).setInterpolator(fadeInterpolator).start()
+        binding.pinScreenContainer.animate()
+            .alpha(1f)
+            .setDuration(duration)
+            .setInterpolator(fadeInterpolator)
+            .start()
 
         fun popUpAnim(v: View, delay: Long) {
             v.animate().scaleX(1f).scaleY(1f).alpha(1f).setDuration(duration).setStartDelay(delay).setInterpolator(popInterpolator).start()
@@ -744,6 +773,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         popUpAnim(binding.tvEnterPinLabel, 0)
         popUpAnim(binding.tvPinInfoLabel, 50)
         popUpAnim(binding.bottomKeypadContainer, 100)
+        popUpAnim(binding.ivLockIcon, 150)
     }
 
     private fun hidePinScreen() {
@@ -751,13 +781,26 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         val shrinkInterpolator = AnticipateInterpolator()
 
         fun shrinkOutAnim(v: View, delay: Long) {
-            v.animate().scaleX(0.7f).scaleY(0.7f).alpha(0f).setStartDelay(delay).setDuration(duration).setInterpolator(shrinkInterpolator).start()
+            v.animate()
+                .scaleX(0.7f)
+                .scaleY(0.7f)
+                .alpha(0f)
+                .setStartDelay(delay)
+                .setDuration(duration)
+                .setInterpolator(shrinkInterpolator)
+                .start()
         }
 
-        shrinkOutAnim(binding.tvEnterPinLabel, 0); shrinkOutAnim(binding.tvPinInfoLabel, 20)
-        shrinkOutAnim(binding.pinIndicatorsLayout, 40); shrinkOutAnim(binding.bottomKeypadContainer, 60)
+        shrinkOutAnim(binding.tvEnterPinLabel, 0)
+        shrinkOutAnim(binding.tvPinInfoLabel, 20)
+        shrinkOutAnim(binding.pinIndicatorsLayout, 40)
+        shrinkOutAnim(binding.bottomKeypadContainer, 60)
 
-        binding.ivLockIcon.animate().alpha(0f).setDuration(duration).start()
+        binding.ivLockIcon.animate()
+            .scaleX(0f).scaleY(0f).alpha(0f)
+            .setDuration(duration)
+            .setInterpolator(shrinkInterpolator)
+            .start()
 
         val lockscreenViews = listOf(
             binding.tvBigClock, binding.tvDate, binding.ivLock,
@@ -765,17 +808,37 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             binding.statusBarContainer, binding.tvTicker, binding.tvMarqueeBottom
         )
         lockscreenViews.forEach {
-            it.animate().scaleX(1f).scaleY(1f).alpha(1f).translationY(0f).translationX(0f)
-                .setDuration(250L).setInterpolator(DecelerateInterpolator()).start()
+            it.visibility = View.VISIBLE
+            it.animate()
+                .scaleX(1f)
+                .scaleY(1f)
+                .alpha(1f)
+                .translationY(0f)
+                .translationX(0f)
+                .setDuration(250L)
+                .setInterpolator(DecelerateInterpolator())
+                .start()
         }
 
-        binding.pinScreenContainer.animate().alpha(0f).translationY(0f).setStartDelay(100).setDuration(200).withEndAction {
-            binding.pinScreenContainer.visibility = View.GONE
-            currentPinInput = ""; updatePinIndicators()
-            binding.tvEnterPinLabel.scaleX = 1f; binding.tvEnterPinLabel.scaleY = 1f
-            binding.tvPinInfoLabel.scaleX = 1f; binding.tvPinInfoLabel.scaleY = 1f
-            binding.pinIndicatorsLayout.scaleX = 1f; binding.pinIndicatorsLayout.scaleY = 1f; binding.pinIndicatorsLayout.alpha = 1f
-        }.start()
+        binding.pinScreenContainer.animate()
+            .alpha(0f)
+            .translationY(0f)
+            .setStartDelay(100)
+            .setDuration(200)
+            .withEndAction {
+                binding.pinScreenContainer.visibility = View.GONE
+                currentPinInput = ""
+                updatePinIndicators()
+
+                binding.tvEnterPinLabel.scaleX = 1f
+                binding.tvEnterPinLabel.scaleY = 1f
+                binding.tvPinInfoLabel.scaleX = 1f
+                binding.tvPinInfoLabel.scaleY = 1f
+                binding.pinIndicatorsLayout.scaleX = 1f
+                binding.pinIndicatorsLayout.scaleY = 1f
+                binding.pinIndicatorsLayout.alpha = 1f
+            }
+            .start()
     }
 
     override fun onBackPressed() {
@@ -942,7 +1005,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
         try {
             val safeScreenWidth = if (screenWidth > 0) screenWidth.toFloat() else resources.displayMetrics.widthPixels.toFloat()
-            val targetWidth = (floatScale / 200f) * safeScreenWidth
+            val targetWidth = (floatScale / 100f) * safeScreenWidth
             val targetHeight = targetWidth * 1.41f
 
             val params = binding.imgFloatObject.layoutParams
@@ -1080,6 +1143,34 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         animateOut(binding.statusBarContainer, 0f, 0f); animateOut(binding.tvTicker, 0f, 0f); animateOut(binding.tvMarqueeBottom, 0f, 0f)
 
         handler.postDelayed({ finishAndRemoveTask(); overridePendingTransition(0, 0) }, duration + 50)
+    }
+
+    private fun animateLockscreenToPinView() {
+        val duration = 250L
+        val interpolator = AccelerateInterpolator()
+
+        fun expandAndFade(v: View) {
+            v.animate()
+                .scaleX(1.5f)
+                .scaleY(1.5f)
+                .alpha(0f)
+                .setDuration(duration)
+                .setInterpolator(interpolator)
+                .start()
+        }
+
+        val viewsToHide = listOf(
+            binding.tvBigClock, binding.tvDate, binding.ivLock,
+            binding.bgPhone, binding.ivPhone, binding.bgCamera, binding.ivCamera,
+            binding.statusBarContainer, binding.tvTicker, binding.tvMarqueeBottom
+        )
+
+        viewsToHide.forEach { expandAndFade(it) }
+
+        handler.postDelayed({
+            performUnlock()
+            viewsToHide.forEach { it.visibility = View.INVISIBLE }
+        }, duration)
     }
 
     private fun generateCardPrediction(valueStr: String, suitCode: Int) {

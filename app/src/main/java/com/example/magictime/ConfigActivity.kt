@@ -40,14 +40,10 @@ class ConfigActivity : AppCompatActivity() {
             customImageUriString = it.toString()
             isUsingGalleryMode = true
             binding.switchImageSource.isChecked = true
-            try {
-                contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                binding.imgFloatPreview.setImageURI(it)
-                binding.imgFloatPreview.visibility = View.VISIBLE
-            } catch (t: Throwable) {
-                t.printStackTrace()
-                binding.imgFloatPreview.visibility = View.GONE
-            }
+
+            refreshPreviewImage()
+            updateDynamicPreviewScale(binding.seekBarFloatSize.progress)
+
         }
     }
 
@@ -65,7 +61,6 @@ class ConfigActivity : AppCompatActivity() {
 
         MobileAds.initialize(this) {}
 
-        // FUNGSI ANIMASI BUKA-TUTUP (SEE MORE) UNTUK 4 KOTAK
         binding.tvToggleBox1.setOnClickListener { handleAccordion(1) }
         binding.tvToggleBox2.setOnClickListener { handleAccordion(2) }
         binding.tvToggleBox3.setOnClickListener { handleAccordion(3) }
@@ -82,6 +77,15 @@ class ConfigActivity : AppCompatActivity() {
                 }
             }
         }
+
+        val speedAdapter = android.widget.ArrayAdapter.createFromResource(
+            this,
+            R.array.speed_options,
+            R.layout.spinner_item
+        )
+
+        speedAdapter.setDropDownViewResource(R.layout.spinner_item)
+        binding.spinnerTimeSpeed.adapter = speedAdapter
 
         binding.spinnerTimeSpeed.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
@@ -116,9 +120,23 @@ class ConfigActivity : AppCompatActivity() {
             binding.etCustomMarquee.visibility = if (isChecked) View.VISIBLE else View.GONE
         }
 
-        binding.switchEnablePin.setOnCheckedChangeListener { _, isChecked ->
-            binding.etCustomPin.isEnabled = isChecked
-            binding.etCustomPin.alpha = if (isChecked) 1.0f else 0.5f
+        binding.switchShowWifi.setOnCheckedChangeListener { _, isChecked ->
+            binding.switchSignal1.isEnabled = !isChecked
+            binding.switchSignal2.isEnabled = !isChecked
+
+            binding.switchSignal1.alpha = if (isChecked) 0.5f else 1.0f
+            binding.switchSignal2.alpha = if (isChecked) 0.5f else 1.0f
+        }
+
+        binding.switchEnablePin.setOnCheckedChangeListener { _, isCheckedStatus ->
+            binding.etCustomPin.isEnabled = isCheckedStatus
+            binding.etCustomPin.alpha = if (isCheckedStatus) 1.0f else 0.5f
+
+            if (!isCheckedStatus) {
+                prefs.edit().remove("FORCED_FLOAT_CARD").apply()
+            }
+            refreshPreviewImage()
+            updateDynamicPreviewScale(binding.seekBarFloatSize.progress)
         }
 
         setupLivePreview(binding.etCustomPin, "PIN Predict")
@@ -143,14 +161,9 @@ class ConfigActivity : AppCompatActivity() {
             isUsingGalleryMode = isChecked
             binding.btnInsertFloatImage.visibility = if (isChecked) View.VISIBLE else View.GONE
 
-            if (isChecked && customImageUriString != null) {
-                try {
-                    binding.imgFloatPreview.setImageURI(Uri.parse(customImageUriString))
-                    binding.imgFloatPreview.visibility = View.VISIBLE
-                } catch (e: Exception) { e.printStackTrace() }
-            } else {
-                binding.imgFloatPreview.visibility = View.GONE
-            }
+            refreshPreviewImage()
+            updateDynamicPreviewScale(binding.seekBarFloatSize.progress)
+
         }
 
         binding.btnInsertFloatImage.setOnClickListener { pickImageLauncher.launch("image/*") }
@@ -170,8 +183,16 @@ class ConfigActivity : AppCompatActivity() {
         }
 
         binding.seekBarFloatSize.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(s: SeekBar?, progress: Int, f: Boolean) {
-                binding.tvFloatSizeLabel.text = "Object Scale: $progress%"
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                val finalProgress = if (progress < 10) 10 else progress
+
+                if (progress < 10 && seekBar != null) {
+                    seekBar.progress = 10
+                }
+
+                binding.tvFloatSizeLabel.text = "Object Scale: $finalProgress%"
+
+                updateDynamicPreviewScale(finalProgress)
             }
             override fun onStartTrackingTouch(s: SeekBar?) {}
             override fun onStopTrackingTouch(s: SeekBar?) {}
@@ -275,7 +296,16 @@ class ConfigActivity : AppCompatActivity() {
         binding.etCustomCarrier.visibility = if (showCarrier) View.VISIBLE else View.GONE
         binding.etCustomMarquee.visibility = if (showMarquee) View.VISIBLE else View.GONE
 
-        binding.switchShowWifi.isChecked = prefs.getBoolean("SHOW_WIFI", true)
+        val isWifiOn = prefs.getBoolean("SHOW_WIFI", true)
+        binding.switchShowWifi.isChecked = isWifiOn
+
+        binding.switchSignal1.isEnabled = !isWifiOn
+        binding.switchSignal2.isEnabled = !isWifiOn
+        binding.switchSignal1.alpha = if (isWifiOn) 0.5f else 1.0f
+        binding.switchSignal2.alpha = if (isWifiOn) 0.5f else 1.0f
+
+        binding.switch5G.isChecked = prefs.getBoolean("USE_5G", false)
+
         binding.switchSignal1.isChecked = prefs.getBoolean("SIM1_4G", true)
         binding.switchSignal2.isChecked = prefs.getBoolean("SIM2_4G", false)
 
@@ -324,6 +354,7 @@ class ConfigActivity : AppCompatActivity() {
         editor.putBoolean("SHOW_WIFI", binding.switchShowWifi.isChecked)
         editor.putBoolean("SIM1_4G", binding.switchSignal1.isChecked)
         editor.putBoolean("SIM2_4G", binding.switchSignal2.isChecked)
+        editor.putBoolean("USE_5G", binding.switch5G.isChecked)
         editor.putBoolean("IS_24H", binding.rbFormat24.isChecked)
         editor.putBoolean("ENABLE_PIN", binding.switchEnablePin.isChecked)
 
@@ -345,7 +376,7 @@ class ConfigActivity : AppCompatActivity() {
     private fun loadFloatSettings() {
         val fPrefs = getSharedPreferences("MagicTimePrefs", MODE_PRIVATE)
         binding.switchFloatEffect.isChecked = fPrefs.getBoolean("FLOAT_IS_ACTIVE", false)
-        binding.seekBarFloatSize.progress = fPrefs.getInt("FLOAT_SCALE", 100)
+        binding.seekBarFloatSize.progress = fPrefs.getInt("FLOAT_SCALE", 75)
 
         currentFloatDelay = fPrefs.getInt("FLOAT_DELAY", 0)
         binding.tvFloatDelayValue.text = "${currentFloatDelay}s"
@@ -355,17 +386,20 @@ class ConfigActivity : AppCompatActivity() {
 
         customImageUriString = fPrefs.getString("FLOAT_CUSTOM_URI", null)
 
-        if (isUsingGalleryMode && customImageUriString != null) {
-            try {
-                binding.imgFloatPreview.setImageURI(Uri.parse(customImageUriString))
-                binding.imgFloatPreview.visibility = View.VISIBLE
-                binding.btnInsertFloatImage.visibility = View.VISIBLE
-            } catch (e: Exception) {
-                binding.imgFloatPreview.visibility = View.GONE
+        refreshPreviewImage()
+        updateDynamicPreviewScale(binding.seekBarFloatSize.progress)
+
+        binding.switchLivePreview.isChecked = false
+        binding.framePhonePreview.visibility = View.GONE
+
+        binding.switchLivePreview.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                binding.framePhonePreview.visibility = View.VISIBLE
+                refreshPreviewImage()
+                updateDynamicPreviewScale(binding.seekBarFloatSize.progress)
+            } else {
+                binding.framePhonePreview.visibility = View.GONE
             }
-        } else {
-            binding.imgFloatPreview.visibility = View.GONE
-            binding.btnInsertFloatImage.visibility = View.GONE
         }
     }
 
@@ -403,5 +437,63 @@ class ConfigActivity : AppCompatActivity() {
             layouts[targetPos].visibility = View.VISIBLE
             buttons[targetPos].text = "Hide Settings ▴"
         }
+    }
+
+    private fun refreshPreviewImage() {
+        var imageSet = false
+
+        if (isUsingGalleryMode && customImageUriString != null) {
+            try {
+                binding.imgDynamicFloatPreview.setImageURI(Uri.parse(customImageUriString))
+                imageSet = true
+            } catch (e: Exception) { e.printStackTrace() }
+        }
+
+        if (!imageSet && binding.switchEnablePin.isChecked) {
+            val forcedCard = prefs.getString("FORCED_FLOAT_CARD", null)
+            if (forcedCard != null) {
+                val resId = resources.getIdentifier(forcedCard, "drawable", packageName)
+                if (resId != 0) {
+                    binding.imgDynamicFloatPreview.setImageResource(resId)
+                    imageSet = true
+                }
+            }
+        }
+
+        if (!imageSet) {
+            try {
+                binding.imgDynamicFloatPreview.setImageResource(R.drawable.back_card)
+            } catch (e: Exception) {}
+        }
+    }
+
+    private fun updateDynamicPreviewScale(progress: Int) {
+        val frameWidth = binding.framePhonePreview.width
+
+        if (frameWidth > 0) {
+            applyPreviewSize(progress, frameWidth.toFloat())
+        } else {
+            binding.framePhonePreview.viewTreeObserver.addOnGlobalLayoutListener(
+                object : android.view.ViewTreeObserver.OnGlobalLayoutListener {
+                    override fun onGlobalLayout() {
+                        binding.framePhonePreview.viewTreeObserver.removeOnGlobalLayoutListener(this)
+                        applyPreviewSize(progress, binding.framePhonePreview.width.toFloat())
+                    }
+                }
+            )
+        }
+    }
+
+    private fun applyPreviewSize(progress: Int, frameWidth: Float) {
+        val safeProgress = if (progress < 10) 10 else progress
+        val targetWidth = (safeProgress / 100f) * frameWidth
+        val targetHeight = targetWidth * 1.41f
+
+        val params = binding.imgDynamicFloatPreview.layoutParams
+        params.width = targetWidth.toInt()
+        params.height = targetHeight.toInt()
+        binding.imgDynamicFloatPreview.layoutParams = params
+
+        binding.imgDynamicFloatPreview.requestLayout()
     }
 }
