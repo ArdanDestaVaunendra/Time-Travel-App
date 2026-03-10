@@ -53,6 +53,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.math.abs
+import kotlinx.coroutines.withContext
 
 @Suppress("DEPRECATION")
 class FakeLockActivity : AppCompatActivity(), SensorEventListener {
@@ -196,9 +197,16 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
     override fun onResume() {
         super.onResume()
+
+        binding.root.alpha = 1f
+        binding.root.visibility = View.VISIBLE
+
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
         registerReceiver(batteryReceiver, filter)
         startClockLoop()
+
+        loadWallpaper()
+        try { hideSystemUI() } catch (e: Exception) {}
     }
 
     override fun onPause() {
@@ -278,28 +286,29 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
     private fun loadWallpaper() {
         val uriString = prefs.getString("WALLPAPER_URI", null)
-        if (uriString != null) {
-            try {
-                binding.imgBackground.setImageURI(Uri.parse(uriString))
-            } catch (e: Exception) {
-                binding.imgBackground.setBackgroundColor(Color.BLACK)
-            }
-        } else {
-            binding.imgBackground.setBackgroundColor(Color.BLACK)
-        }
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                val sourceBitmap = if (uriString != null) {
-                    MediaStore.Images.Media.getBitmap(contentResolver, Uri.parse(uriString))
-                } else {
-                    Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888).apply { eraseColor(Color.BLACK) }
-                }
+                if (uriString != null) {
+                    val sourceBitmap = MediaStore.Images.Media.getBitmap(contentResolver, Uri.parse(uriString))
 
-                val scaledBitmap = Bitmap.createScaledBitmap(sourceBitmap, sourceBitmap.width / 5, sourceBitmap.height / 5, false)
-                blurredWallpaperBitmap = blurBitmap(this@FakeLockActivity, scaledBitmap, 20f)
+                    withContext(Dispatchers.Main) {
+                        binding.imgBackground.setImageBitmap(sourceBitmap)
+                    }
+
+                    val scaledBitmap = Bitmap.createScaledBitmap(sourceBitmap, sourceBitmap.width / 5, sourceBitmap.height / 5, false)
+                    blurredWallpaperBitmap = blurBitmap(this@FakeLockActivity, scaledBitmap, 20f)
+
+                } else {
+                    withContext(Dispatchers.Main) {
+                        binding.imgBackground.setBackgroundColor(Color.BLACK)
+                    }
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    binding.imgBackground.setBackgroundColor(Color.parseColor("#121212"))
+                }
             }
         }
     }
@@ -518,6 +527,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             binding.root.animate().alpha(0f).setDuration(200).withEndAction {
                 try {
                     val intent = Intent(Intent.ACTION_DIAL).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
                         addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
                     }
