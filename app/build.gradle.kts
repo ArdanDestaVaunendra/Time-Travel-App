@@ -1,18 +1,17 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    // Plugin compose ini opsional kalau kamu mau pake Jetpack Compose juga, kalau error bisa dihapus
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
     namespace = "com.example.magictime"
-    compileSdk = 35 // KITA PAKAI 35 (Android 14) AGAR STABIL
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.magictime"
         minSdk = 24
-        targetSdk = 35 // SAMAKAN DENGAN COMPILE SDK
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -26,7 +25,6 @@ android {
         }
     }
 
-    // SETTING JAVA VERSION (Kita kunci di Java 11 biar aman)
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -35,15 +33,13 @@ android {
         jvmTarget = "11"
     }
 
-    // FITUR WAJIB
     buildFeatures {
-        compose = true      // Biar template bawaan gak error
-        viewBinding = true  // WAJIB: Biar kita bisa koding logic Fake Lock Screen pakai XML
+        compose = true
+        viewBinding = true
     }
 }
 
 dependencies {
-    // --- LIBRARY BAWAAN (JANGAN DIHAPUS) ---
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation("androidx.activity:activity-compose:1.8.2")
@@ -52,9 +48,6 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
-
-    // --- TAMBAHAN KHUSUS MAGIC APP (WAJIB ADA) ---
-    // Library ini supaya Activity 'Fake Lock Screen' bisa pakai XML biasa (ImageView/TextView)
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.recyclerview:recyclerview:1.4.0")
@@ -67,7 +60,6 @@ dependencies {
     implementation("androidx.gridlayout:gridlayout:1.1.0")
     implementation("com.google.android.gms:play-services-ads:24.9.0")
 
-    // --- TESTING (BIARKAN SAJA) ---
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")

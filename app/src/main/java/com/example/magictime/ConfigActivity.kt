@@ -10,7 +10,6 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.EditText
 import android.widget.SeekBar
-import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.ActivityResultLauncher
 import androidx.appcompat.app.AppCompatActivity
@@ -157,6 +156,10 @@ class ConfigActivity : AppCompatActivity() {
         binding.btnDelayMinus.setOnClickListener { if (delaySeconds > 0) delaySeconds--; updateUIText() }
 
         // --- SETUP UI AR FLOAT ---
+        binding.switchRedCardBack.setOnCheckedChangeListener { _, _ ->
+            refreshPreviewImage()
+        }
+
         binding.switchImageSource.setOnCheckedChangeListener { _, isChecked ->
             isUsingGalleryMode = isChecked
             binding.btnInsertFloatImage.visibility = if (isChecked) View.VISIBLE else View.GONE
@@ -276,6 +279,15 @@ class ConfigActivity : AppCompatActivity() {
 
     // --- SAVE & LOAD SETTINGS ---
     private fun loadSavedSettings() {
+        binding.switchTimeTravel.setOnCheckedChangeListener(null)
+
+        val isTimeEnabled = prefs.getBoolean("ENABLE_TIME_TRAVEL", true)
+        binding.switchTimeTravel.isChecked = isTimeEnabled
+
+        binding.switchTimeTravel.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean("ENABLE_TIME_TRAVEL", isChecked).apply()
+        }
+
         offsetMinutes = prefs.getInt("OFFSET_SEC", 0) / 60
         delaySeconds = prefs.getInt("DELAY_MS", 5000) / 1000
 
@@ -344,6 +356,7 @@ class ConfigActivity : AppCompatActivity() {
 
     private fun saveSettings() {
         val editor = prefs.edit()
+        editor.putBoolean("ENABLE_TIME_TRAVEL", binding.switchTimeTravel.isChecked)
         editor.putInt("OFFSET_SEC", offsetMinutes * 60)
         editor.putInt("DELAY_MS", delaySeconds * 1000)
         editor.putBoolean("TRIGGER_VOLUME", binding.rbVolume.isChecked)
@@ -381,6 +394,8 @@ class ConfigActivity : AppCompatActivity() {
         currentFloatDelay = fPrefs.getInt("FLOAT_DELAY", 0)
         binding.tvFloatDelayValue.text = "${currentFloatDelay}"
 
+        binding.switchRedCardBack.isChecked = fPrefs.getBoolean("USE_RED_BACK", false)
+
         isUsingGalleryMode = fPrefs.getBoolean("IS_GALLERY_MODE", false)
         binding.switchImageSource.isChecked = isUsingGalleryMode
 
@@ -415,6 +430,8 @@ class ConfigActivity : AppCompatActivity() {
         editor.putBoolean("FLOAT_IS_ACTIVE", binding.switchFloatEffect.isChecked)
         editor.putInt("FLOAT_SCALE", binding.seekBarFloatSize.progress)
         editor.putInt("FLOAT_DELAY", currentFloatDelay)
+
+        editor.putBoolean("USE_RED_BACK", binding.switchRedCardBack.isChecked)
 
         editor.putBoolean("IS_GALLERY_MODE", isUsingGalleryMode)
         editor.putString("FLOAT_CUSTOM_URI", customImageUriString)
@@ -476,7 +493,11 @@ class ConfigActivity : AppCompatActivity() {
 
         if (!imageSet) {
             try {
-                binding.imgDynamicFloatPreview.setImageResource(R.drawable.back_card)
+                if (binding.switchRedCardBack.isChecked) {
+                    binding.imgDynamicFloatPreview.setImageResource(R.drawable.back_card_red)
+                } else {
+                    binding.imgDynamicFloatPreview.setImageResource(R.drawable.back_card_blue)
+                }
             } catch (e: Exception) {}
         }
     }

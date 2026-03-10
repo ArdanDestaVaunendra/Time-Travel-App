@@ -81,6 +81,36 @@
                     android:orientation="vertical"
                     android:padding="20dp">
 
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Enable Time Travel Effect"
+                            android:textColor="#1D1D1F"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchTimeTravel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            app:thumbTint="@color/switch_thumb_color"
+                            app:trackTint="@color/switch_track_color" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginBottom="16dp"
+                        android:background="#EAEAEA" />
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -459,9 +489,9 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="4dp"
-                            android:layout_marginTop="4dp"
+                            android:layout_marginTop="1dp"
                             android:text="Info: Trigger is the opposite of Time Trigger."
-                            android:textColor="#D1002E"
+                            android:textColor="#D12012"
                             android:textSize="11sp"
                             android:textStyle="italic" />
 
@@ -469,7 +499,7 @@
                             android:id="@+id/etRevealText"
                             android:layout_width="match_parent"
                             android:layout_height="50dp"
-                            android:layout_marginTop="8dp"
+                            android:layout_marginTop="18dp"
                             android:layout_marginBottom="16dp"
                             android:background="#F5F5F7"
                             android:hint="The secret message to reveal..."
@@ -747,6 +777,34 @@
                                 android:orientation="vertical"
                                 android:paddingHorizontal="16dp"
                                 android:paddingVertical="12dp">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="center_vertical"
+                                    android:orientation="horizontal">
+
+                                    <TextView
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:text="Use Red Card Back"
+                                        android:textColor="#1D1D1F"
+                                        android:textSize="14sp" />
+
+                                    <com.google.android.material.switchmaterial.SwitchMaterial
+                                        android:id="@+id/switchRedCardBack"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        app:thumbTint="@color/switch_thumb_color"
+                                        app:trackTint="@color/switch_track_color" />
+                                </LinearLayout>
+
+                                <View
+                                    android:layout_width="match_parent"
+                                    android:layout_height="1dp"
+                                    android:layout_marginVertical="12dp"
+                                    android:background="#EAEAEA" />
 
                                 <LinearLayout
                                     android:layout_width="match_parent"

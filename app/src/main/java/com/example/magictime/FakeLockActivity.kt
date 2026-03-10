@@ -73,6 +73,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     private var useIndonesianLanguage = true
 
     // === VARIABEL TIME TRAVEL ===
+    private var isTimeTravelEnabled = true
     private var isMagicActivated = false
     private var currentDisplayOffset = 0L
     private var delayStartMs = 0L
@@ -82,6 +83,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
     // === VARIABEL PIN & PREDICTION ===
     private var isPinEnabled = true
+    private var secretMode = 0
     private var correctPin = "888000"
     private var currentPinInput = ""
     private val maxPinLength = 6
@@ -98,6 +100,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     private var revealTarget = "BOTH"
     private var isRevealed = false
     private var revealDurationMs = 7000L
+    private var cancelReveal = false
 
     // === VARIABEL AR FLOAT & SENSOR ===
     private lateinit var sensorManager: SensorManager
@@ -125,17 +128,20 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                     val batteryPct = (level * 100 / scale.toFloat()).toInt()
 
                     binding.tvBatteryLevel.text = "$batteryPct"
-                    binding.tvBatteryLevel.background.setLevel(batteryPct * 100)
 
-                    val bgColor = when {
-                        batteryPct <= 5 -> Color.RED
-                        batteryPct <= 15 -> Color.YELLOW
-                        else -> Color.WHITE
+                    val bgDrawable = binding.tvBatteryLevel.background
+                    bgDrawable.setLevel(batteryPct * 100)
+
+                    val fillColor = if (batteryPct <= 15) Color.RED else Color.WHITE
+
+                    if (bgDrawable is android.graphics.drawable.LayerDrawable) {
+                        val progressLayer = bgDrawable.findDrawableByLayerId(android.R.id.progress)
+                        progressLayer?.setTint(fillColor)
+                    } else {
+                        bgDrawable.setTint(fillColor)
                     }
-                    binding.tvBatteryLevel.background.setTint(bgColor)
 
-                    val textColor = if (batteryPct <= 5) Color.WHITE else Color.BLACK
-                    binding.tvBatteryLevel.setTextColor(textColor)
+                    binding.tvBatteryLevel.setTextColor(Color.BLACK)
                 }
             }
         }
@@ -147,6 +153,14 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (binding.pinScreenContainer.visibility == View.VISIBLE) {
+                    hidePinScreen()
+                }
+            }
+        })
 
         try {
             binding = ActivityFakeLockBinding.inflate(layoutInflater)
@@ -185,9 +199,6 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
         registerReceiver(batteryReceiver, filter)
         startClockLoop()
-        accelerometer?.let {
-            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME)
-        }
     }
 
     override fun onPause() {
@@ -201,7 +212,14 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     // INITIALIZATION & SETTINGS
     // ==========================================
     private fun loadSettings() {
-        currentDisplayOffset = prefs.getInt("OFFSET_SEC", 0).toLong()
+        val isTimeTravelEnabled = prefs.getBoolean("ENABLE_TIME_TRAVEL", true)
+
+        if (!isTimeTravelEnabled) {
+            currentDisplayOffset = 0L
+        } else {
+            currentDisplayOffset = prefs.getInt("OFFSET_SEC", 0).toLong()
+        }
+
         delayStartMs = prefs.getInt("DELAY_MS", 0).toLong()
         timeSpeedMultiplier = prefs.getFloat("TIME_SPEED", 1.0f)
 
@@ -216,7 +234,6 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         binding.tvMarqueeBottom.visibility = if (showMarquee) View.VISIBLE else View.INVISIBLE
         binding.tvMarqueeBottom.text = prefs.getString("CUSTOM_MARQUEE", "custom text here")
 
-        // --- LOGIC WIFI & 4G/5G ---
         val isWifiOn = prefs.getBoolean("SHOW_WIFI", true)
         binding.ivWifi.visibility = if (isWifiOn) View.VISIBLE else View.GONE
 
@@ -247,7 +264,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             }
         }
 
-        isCardCodeEnabled = prefs.getBoolean("ENABLE_CARD_CODE", true) // Note: Flag is loaded but consider using it if needed in future logic
+        isCardCodeEnabled = prefs.getBoolean("ENABLE_CARD_CODE", true)
         revealDurationMs = prefs.getInt("REVEAL_DURATION", 7) * 1000L
 
         isRevealEnabled = prefs.getBoolean("ENABLE_REVEAL", false)
@@ -340,6 +357,8 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     // MAGIC TRIGGERS & GESTURES
     // ==========================================
     private fun triggerMagic() {
+        if (!isTimeTravelEnabled) return
+
         if (isMagicActivated) return
         isMagicActivated = true
         lifecycleScope.launch {
@@ -410,6 +429,15 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                 return true
             }
         })
+
+        binding.ivLock.setOnClickListener {
+            if (isRevealed) {
+                cancelReveal = true
+                vibratePattern(isDouble = false)
+            } else {
+
+            }
+        }
 
         binding.root.setOnTouchListener { _, event ->
             if (gestureDetector.onTouchEvent(event)) return@setOnTouchListener true
@@ -603,9 +631,30 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             if (isSecretSetupMode) {
                 when (secretSetupStep) {
                     1 -> {
-                        val input = currentPinInput.toIntOrNull() ?: 0
-                        if (input in 1..13) {
-                            secretCardValue = currentPinInput
+                        val inputStr = currentPinInput
+                        var isValid = false
+
+                        if (inputStr == "000") {
+                            secretMode = 4
+                            isValid = true
+                        } else if (inputStr == "0") {
+                            secretMode = 1
+                            isValid = true
+                        } else if (inputStr.startsWith("00") && inputStr.length > 2) {
+                            secretMode = 3
+                            val v = inputStr.substring(2).toIntOrNull() ?: 0
+                            if (v in 1..13) { secretCardValue = v.toString(); isValid = true }
+                        } else if (inputStr.startsWith("0") && inputStr.length > 1) {
+                            secretMode = 2
+                            val v = inputStr.substring(1).toIntOrNull() ?: 0
+                            if (v in 1..13) { secretCardValue = v.toString(); isValid = true }
+                        } else {
+                            secretMode = 0
+                            val v = inputStr.toIntOrNull() ?: 0
+                            if (v in 1..13) { secretCardValue = v.toString(); isValid = true }
+                        }
+
+                        if (isValid) {
                             vibratePattern(isDouble = false)
                             secretSetupStep = 2
                         } else {
@@ -616,9 +665,87 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                         updatePinIndicators()
                     }
                     2 -> {
-                        val input = currentPinInput.toIntOrNull() ?: 0
-                        if (input in 1..4) {
-                            generateCardPrediction(secretCardValue, input)
+                        val inputStr = currentPinInput
+                        val inputInt = inputStr.toIntOrNull() ?: 0
+
+                        val bhStack = listOf(
+                            "10c", "7h", "4s", "Ad", "Jd", "6c", "7c", "9s", "6d", "Ac",
+                            "Jc", "8h", "5s", "2d", "Qd", "3h", "Kh", "10s", "7d", "2c",
+                            "Qc", "9h", "6s", "3d", "Kd", "4h", "As", "Js", "8d", "3c",
+                            "Kc", "10h", "7s", "4d", "8c", "5h", "2s", "Qs", "9d", "4c",
+                            "Ah", "Jh", "8s", "5d", "9c", "6h", "3s", "Ks", "10d", "5c",
+                            "2h", "Qh"
+                        )
+
+                        var isPredictionValid = false
+
+                        if (secretMode == 4) {
+                            var offsetMinutes = 0
+
+                            if (inputStr == "0" || inputStr == "00") {
+                                offsetMinutes = 0
+                            } else if (inputStr.startsWith("0") && inputStr.length > 1) {
+                                val v = inputStr.substring(1).toIntOrNull() ?: 0
+                                offsetMinutes = -v
+                            } else {
+                                offsetMinutes = inputInt
+                            }
+
+                            val offsetSec = offsetMinutes * 60
+
+                            prefs.edit().apply {
+                                putInt("OFFSET_SEC", offsetSec)
+                                putBoolean("ENABLE_TIME_TRAVEL", offsetSec != 0)
+                                apply()
+                            }
+
+                            currentDisplayOffset = offsetSec.toLong()
+                            baseRealTime = System.currentTimeMillis()
+                            baseSyntheticTime = System.currentTimeMillis() + (currentDisplayOffset * 1000)
+
+                            vibratePattern(isDouble = true)
+
+                        } else if (secretMode == 1) {
+                            if (inputInt == 0) {
+                                forceCardPrediction = bhStack.joinToString(" - ")
+                                isPredictionValid = true
+                            } else if (inputInt in 1..bhStack.size) {
+                                forceCardPrediction = bhStack[inputInt - 1]
+                                isPredictionValid = true
+                            }
+                        } else {
+                            if (inputInt in 1..4) {
+                                val valueInt = secretCardValue.toIntOrNull() ?: 1
+                                val suitCode = inputInt
+
+                                val suitLetter = when (suitCode) { 1 -> "d"; 2 -> "c"; 3 -> "h"; 4 -> "s"; else -> "s" }
+                                val valLetter = when (valueInt) { 1 -> "A"; 11 -> "J"; 12 -> "Q"; 13 -> "K"; else -> valueInt.toString() }
+                                val targetCard = "$valLetter$suitLetter"
+
+                                when (secretMode) {
+                                    0 -> {
+                                        generateCardPrediction(secretCardValue, suitCode)
+                                    }
+                                    2 -> {
+                                        val idx = bhStack.indexOf(targetCard)
+                                        forceCardPrediction = if (idx != -1) (idx + 1).toString() else "?"
+                                    }
+                                    3 -> {
+                                        val idx = bhStack.indexOf(targetCard)
+                                        if (idx != -1) {
+                                            val before = if (idx > 0) bhStack[idx - 1] else bhStack.last()
+                                            val after = if (idx < bhStack.size - 1) bhStack[idx + 1] else bhStack.first()
+                                            forceCardPrediction = "$before - $after"
+                                        } else {
+                                            forceCardPrediction = "?"
+                                        }
+                                    }
+                                }
+                                isPredictionValid = true
+                            }
+                        }
+
+                        if (isPredictionValid && secretMode != 4) {
                             vibratePattern(isDouble = true)
                             val baseCustomText = prefs.getString("REVEAL_TEXT", "") ?: ""
                             revealText = if (baseCustomText.isNotEmpty()) {
@@ -627,11 +754,13 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                                 forceCardPrediction
                             }
                         }
+
                         isSecretSetupMode = false
                         secretSetupStep = 0
                         currentPinInput = ""
                         updatePinIndicators()
                     }
+
                 }
             } else {
                 validatePin()
@@ -841,15 +970,18 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             .start()
     }
 
-    override fun onBackPressed() {
-        if (binding.pinScreenContainer.visibility == View.VISIBLE) hidePinScreen() else super.onBackPressed()
-    }
-
     private fun triggerSecretMessage() {
         if (!isRevealEnabled || isRevealed || revealText.isEmpty()) return
+
         isRevealed = true
+        cancelReveal = false
 
         handler.postDelayed({
+            if (cancelReveal) {
+                isRevealed = false
+                return@postDelayed
+            }
+
             val viewsToAnimate = mutableListOf<View>()
             when (revealTarget) {
                 "CARRIER" -> viewsToAnimate.add(binding.tvTicker)
@@ -861,46 +993,66 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                 if (v !is TextView) continue
 
                 v.animate().alpha(0f).setDuration(200).withEndAction {
+                    if (cancelReveal) { restoreOriginalText(v); return@withEndAction }
+
                     v.animate().alpha(1f).setDuration(200).withEndAction {
+                        if (cancelReveal) { restoreOriginalText(v); return@withEndAction }
+
                         v.animate().alpha(0f).setDuration(200).withEndAction {
+                            if (cancelReveal) { restoreOriginalText(v); return@withEndAction }
+
                             v.animate().alpha(1f).setDuration(200).withEndAction {
+                                if (cancelReveal) { restoreOriginalText(v); return@withEndAction }
+
                                 v.animate().alpha(0f).setDuration(250).withEndAction {
+                                    if (cancelReveal) { restoreOriginalText(v); return@withEndAction }
+
                                     v.text = ""; v.alpha = 1f; v.setTextColor(Color.WHITE); v.isSelected = true
                                     var currentRevealText = ""
+                                    val safeRevealText = revealText
 
-                                    val safeRevealText = revealText ?: ""
+                                    val typeSpeed = if (safeRevealText.length > 50) 20L else 40L
+                                    val actualDuration = if (safeRevealText.length > 50) {
+                                        (safeRevealText.length * 170L) + 2000L
+                                    } else {
+                                        revealDurationMs
+                                    }
 
                                     safeRevealText.forEachIndexed { index, char ->
                                         v.postDelayed({
+                                            if (cancelReveal) {
+                                                restoreOriginalText(v)
+                                                return@postDelayed
+                                            }
+
                                             currentRevealText += char
                                             v.text = currentRevealText
 
                                             if (index == safeRevealText.length - 1) {
-                                                v.postDelayed({
-                                                    val originalText = if (v.id == binding.tvTicker.id) {
-                                                        prefs.getString("CUSTOM_CARRIER", "TELKOMSEL") ?: "TELKOMSEL"
-                                                    } else {
-                                                        prefs.getString("CUSTOM_MARQUEE", "Running Text") ?: "Running Text"
-                                                    }
+                                                v.isSelected = false
+                                                v.isSelected = true
 
-                                                    v.animate().alpha(0f).setDuration(150).withEndAction {
-                                                        v.text = ""; v.alpha = 1f; v.setTextColor(Color.WHITE)
-                                                        var currentOriginalText = ""
-                                                        originalText.forEachIndexed { i, c ->
-                                                            v.postDelayed({
-                                                                currentOriginalText += c
-                                                                v.text = currentOriginalText
+                                                var timeWaited = 0L
+                                                val checkInterval = 100L
 
-                                                                if (i == originalText.length - 1) {
-                                                                    isRevealed = false
-                                                                    v.isSelected = true
-                                                                }
-                                                            }, i * 40L)
+                                                val waitRunnable = object : Runnable {
+                                                    override fun run() {
+                                                        if (cancelReveal) {
+                                                            restoreOriginalText(v)
+                                                            return
                                                         }
-                                                    }.start()
-                                                }, revealDurationMs)
+
+                                                        timeWaited += checkInterval
+                                                        if (timeWaited >= actualDuration) {
+                                                            restoreOriginalText(v)
+                                                        } else {
+                                                            v.postDelayed(this, checkInterval)
+                                                        }
+                                                    }
+                                                }
+                                                v.postDelayed(waitRunnable, checkInterval)
                                             }
-                                        }, index * 40L)
+                                        }, index * typeSpeed)
                                     }
                                 }.start()
                             }
@@ -910,6 +1062,26 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             }
             vibratePattern(isDouble = false)
         }, (revealDelay * 1000).toLong())
+    }
+
+    private fun restoreOriginalText(v: TextView) {
+        if (!isRevealed) return
+
+        v.animate().alpha(0f).setDuration(150).withEndAction {
+            val originalText = if (v.id == binding.tvTicker.id) {
+                prefs.getString("CUSTOM_CARRIER", "TELKOMSEL") ?: "TELKOMSEL"
+            } else {
+                prefs.getString("CUSTOM_MARQUEE", "Running Text") ?: "Running Text"
+            }
+
+            v.text = originalText
+            v.alpha = 1f
+            v.setTextColor(Color.WHITE)
+            v.isSelected = false
+            v.isSelected = true
+            isRevealed = false
+            cancelReveal = false
+        }.start()
     }
 
     private fun finishPinUnlockWithAnimation() {
@@ -946,6 +1118,10 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
         loadFloatConfigs()
         vibratePattern(isDouble = false)
+
+        accelerometer?.let {
+            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME)
+        }
 
         binding.imgFloatObject.post {
             binding.imgFloatObject.x = (screenWidth / 2f) - (binding.imgFloatObject.width / 2f)
@@ -1015,7 +1191,12 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
         if (!isImageSet) {
             try {
-                binding.imgFloatObject.setImageResource(R.drawable.back_card)
+                val useRedBack = fPrefs.getBoolean("USE_RED_BACK", false)
+                if (useRedBack) {
+                    binding.imgFloatObject.setImageResource(R.drawable.back_card_red)
+                } else {
+                    binding.imgFloatObject.setImageResource(R.drawable.back_card_blue)
+                }
             } catch (t: Throwable) { t.printStackTrace() }
         }
 
@@ -1065,6 +1246,9 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                             .setDuration(180).setInterpolator(AccelerateInterpolator())
                             .withEndAction {
                                 v.visibility = View.GONE
+
+                                sensorManager.unregisterListener(this@FakeLockActivity, accelerometer)
+
                                 v.alpha = 1f
                                 v.translationX = 0f; v.translationY = 0f
                                 v.x = (screenWidth / 2 - v.width / 2).toFloat()
