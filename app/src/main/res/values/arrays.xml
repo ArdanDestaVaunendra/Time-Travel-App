@@ -4,9 +4,9 @@
         <item>Super Fast (x1.35)</item>
         <item>Fast (x1.2)</item>
         <item>Normal (x1.0)</item>
-        <item>Slow (x0.85)</item>
-        <item>Half Speed (x0.7)</item>
+        <item>Little Slow (x0.85)</item>
+        <item>Slow (x0.7)</item>
         <item>Super Slow (x0.45)</item>
-        <item>Matrix Speed (x0.2)</item>
+        <item>Hyper Slow (x0.2)</item>
     </string-array>
 </resources>
