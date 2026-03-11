@@ -388,6 +388,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             }
             currentDisplayOffset = 0
             updateTimeUI()
+            isMagicActivated = false
         }
     }
 
@@ -713,6 +714,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                             baseRealTime = System.currentTimeMillis()
                             baseSyntheticTime = System.currentTimeMillis() + (currentDisplayOffset * 1000)
 
+                            isMagicActivated = false
                             vibratePattern(isDouble = true)
 
                         } else if (secretMode == 1) {
@@ -1449,9 +1451,21 @@ private fun blurBitmap(context: Context, bitmap: Bitmap, radius: Float): Bitmap 
         e.printStackTrace()
         bitmap
     } finally {
-        try { script?.destroy() } catch (_: Throwable) {}
-        try { inputAlloc?.destroy() } catch (_: Throwable) {}
-        try { outputAlloc?.destroy() } catch (_: Throwable) {}
-        try { rs?.destroy() } catch (_: Throwable) {}
+        try { script?.destroy()
+        } catch (_: Throwable) {
+
+        }
+        try { inputAlloc?.destroy() }
+        catch (_: Throwable) {
+
+        }
+        try { outputAlloc?.destroy()
+        } catch (_: Throwable) {
+
+        }
+        try { rs?.destroy()
+        } catch (_: Throwable) {
+
+        }
     }
 }

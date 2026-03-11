@@ -839,6 +839,16 @@
                                     app:backgroundTint="#5800D1"
                                     app:cornerRadius="10dp" />
 
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/btnSetFloatCard"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="8dp"
+                                    android:text="Choose a Prediction Card"
+                                    android:textAllCaps="false"
+                                    app:backgroundTint="#5800D1"
+                                    app:cornerRadius="10dp" />
+
                                 <View
                                     android:layout_width="match_parent"
                                     android:layout_height="1dp"

@@ -160,13 +160,23 @@ class ConfigActivity : AppCompatActivity() {
             refreshPreviewImage()
         }
 
+        binding.btnSetFloatCard.setOnClickListener {
+            showCardSelectorDialog()
+        }
+
         binding.switchImageSource.setOnCheckedChangeListener { _, isChecked ->
             isUsingGalleryMode = isChecked
-            binding.btnInsertFloatImage.visibility = if (isChecked) View.VISIBLE else View.GONE
+
+            if (isChecked) {
+                binding.btnInsertFloatImage.visibility = View.VISIBLE
+                binding.btnSetFloatCard.visibility = View.GONE
+            } else {
+                binding.btnInsertFloatImage.visibility = View.GONE
+                binding.btnSetFloatCard.visibility = View.VISIBLE
+            }
 
             refreshPreviewImage()
             updateDynamicPreviewScale(binding.seekBarFloatSize.progress)
-
         }
 
         binding.btnInsertFloatImage.setOnClickListener { pickImageLauncher.launch("image/*") }
@@ -530,5 +540,59 @@ class ConfigActivity : AppCompatActivity() {
         binding.imgDynamicFloatPreview.layoutParams = params
 
         binding.imgDynamicFloatPreview.requestLayout()
+    }
+
+    // --- FUNGSI POP-UP PEMILIH KARTU ---
+    private fun showCardSelectorDialog() {
+        val scrollView = android.widget.ScrollView(this)
+        val gridLayout = android.widget.GridLayout(this).apply {
+            columnCount = 4
+            setPadding(32, 32, 32, 32)
+        }
+        scrollView.addView(gridLayout)
+
+        val dialog = android.app.AlertDialog.Builder(this)
+            .setTitle("Choose a Prediction Card")
+            .setView(scrollView)
+            .setNegativeButton("Cancel", null)
+            .create()
+
+        val suits = listOf("c", "d", "h", "s")
+
+        for (suit in suits) {
+            for (value in 1..13) {
+                val cardName = "$suit$value"
+                val resId = resources.getIdentifier(cardName, "drawable", packageName)
+
+                if (resId != 0) {
+                    val imageView = android.widget.ImageView(this).apply {
+                        setImageResource(resId)
+                        adjustViewBounds = true
+
+                        layoutParams = android.widget.GridLayout.LayoutParams().apply {
+                            width = 0
+                            height = android.widget.GridLayout.LayoutParams.WRAP_CONTENT
+                            columnSpec = android.widget.GridLayout.spec(android.widget.GridLayout.UNDEFINED, 1f)
+                            setMargins(16, 16, 16, 16)
+                        }
+
+                        setOnClickListener {
+                            prefs.edit().putString("FORCED_FLOAT_CARD", cardName).apply()
+
+                            isUsingGalleryMode = false
+                            binding.switchImageSource.isChecked = false
+
+                            refreshPreviewImage()
+                            updateDynamicPreviewScale(binding.seekBarFloatSize.progress)
+
+                            dialog.dismiss()
+                        }
+                    }
+                    gridLayout.addView(imageView)
+                }
+            }
+        }
+
+        dialog.show()
     }
 }
