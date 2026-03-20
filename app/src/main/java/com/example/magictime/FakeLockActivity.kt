@@ -85,7 +85,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     // === VARIABEL PIN & PREDICTION ===
     private var isPinEnabled = true
     private var secretMode = 0
-    private var correctPin = "888000"
+    private var correctPin = "123456"
     private var currentPinInput = ""
     private val maxPinLength = 6
     private var isSecretSetupMode = false
