@@ -178,6 +178,11 @@ class ConfigActivity : AppCompatActivity() {
         binding.btnDelayMinus.setOnClickListener { if (delaySeconds > 0) delaySeconds--; updateUIText() }
 
         // --- SETUP UI AR FLOAT ---
+        binding.switchShakeTrigger.isChecked = prefs.getBoolean("USE_SHAKE_TRIGGER", false)
+        binding.switchShakeTrigger.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean("USE_SHAKE_TRIGGER", isChecked).apply()
+        }
+
         binding.switchRedCardBack.setOnCheckedChangeListener { _, _ ->
             refreshPreviewImage()
         }
@@ -420,6 +425,13 @@ class ConfigActivity : AppCompatActivity() {
 
     private fun loadFloatSettings() {
         val fPrefs = getSharedPreferences("MagicTimePrefs", MODE_PRIVATE)
+
+        binding.switchShakeTrigger.isChecked = fPrefs.getBoolean("USE_SHAKE_TRIGGER", false)
+
+        binding.switchShakeTrigger.setOnCheckedChangeListener { _, isChecked ->
+            fPrefs.edit().putBoolean("USE_SHAKE_TRIGGER", isChecked).apply()
+        }
+
         binding.switchFloatEffect.isChecked = fPrefs.getBoolean("FLOAT_IS_ACTIVE", false)
         binding.seekBarFloatSize.progress = fPrefs.getInt("FLOAT_SCALE", 75)
 
@@ -644,6 +656,7 @@ class ConfigActivity : AppCompatActivity() {
             
             <b><u>C. AR FLOAT OBJECT</u></b><br>
             &#8226; <i>Enable Float Effect:</i> Activates the invisible floating layer revealed by swiping.<br>
+            &#8226; <i>Use Shake Trigger:</i> Replaces the default Volume Up trigger with a physical device shake. A successful shake secretly provides a double haptic feedback (2x vibration) before the delay starts. Volume Up remains completely silent.<br>
             &#8226; <i>Card Backs:</i> Defaults to Blue. Toggle 'Use Red Card Back' to change it.<br>
             &#8226; <i>Image Source:</i> Toggle between the built-in playing cards or pick a custom image from your gallery.<br>
             &#8226; <i>Object Scale & Preview:</i> Adjust the slider to resize the object. The live preview frame shows exact proportions.<br>
@@ -723,7 +736,11 @@ class ConfigActivity : AppCompatActivity() {
             &#8226; <b><u>Functional Shortcuts:</u></b> The Camera, Phone, and Emergency Call buttons are fully operational. Use them casually to validate the lockscreen, but do not over-prove.<br>
             &#8226; <b><u>Safe Navigation:</u></b> Always use the physical lock button to back out of the PIN view to the lockscreen. This safely prevents the real Android navigation bar from accidentally appearing.<br><br>
             
-            <font size="2" color="#777777"><i>Credits: Developed for professional magic performances. Handle with absolute secrecy.</i></font>
+            <br><br>
+            <center>
+            <font size="2" color="#5800D1"><b>APP & ROUTINE ENGINEERED BY ARDAN DESTA VAUNENDRA</b></font><br>
+            <font size="2" color="#777777"><i>Developed for professional magic performances. Handle with absolute secrecy.</i></font>
+            </center>
         """.trimIndent()
 
         val textView = android.widget.TextView(this).apply {

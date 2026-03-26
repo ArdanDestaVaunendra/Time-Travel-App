@@ -118,6 +118,11 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     private var velY = 0f
     private var friction = 0.65f
     private var sensitivity = 1.00f
+    private var useShakeTrigger = false
+    private var isFloatTriggerCountdown = false
+    private var lastAccel = android.hardware.SensorManager.GRAVITY_EARTH
+    private var currentAccel = android.hardware.SensorManager.GRAVITY_EARTH
+    private var shakeAccel = 0.00f
 
     // === BATTERY RECEIVER ===
     private val batteryReceiver: BroadcastReceiver = object : BroadcastReceiver() {
@@ -208,6 +213,15 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
         loadWallpaper()
         try { hideSystemUI() } catch (e: Exception) {}
+
+        val fPrefs = getSharedPreferences("MagicTimePrefs", MODE_PRIVATE)
+        useShakeTrigger = fPrefs.getBoolean("USE_SHAKE_TRIGGER", false)
+
+        if (fPrefs.getBoolean("FLOAT_IS_ACTIVE", false)) {
+            accelerometer?.let {
+                sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME)
+            }
+        }
     }
 
     override fun onPause() {
@@ -396,10 +410,12 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
-            if (floatActive) {
+            if (floatActive && !useShakeTrigger && binding.imgFloatObject.visibility != View.VISIBLE && !isFloatTriggerCountdown) {
+                isFloatTriggerCountdown = true
                 binding.imgFloatObject.removeCallbacks(null)
                 binding.imgFloatObject.postDelayed({
                     showFloatingObject()
+                    isFloatTriggerCountdown = false
                 }, floatDelay * 1000L)
             }
             return true
@@ -905,7 +921,6 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         binding.tvEnterPinLabel.translationY = 0f
         binding.tvEnterPinLabel.text = "Enter PIN"
         binding.tvEnterPinLabel.setTextColor(Color.WHITE)
-
         binding.tvEnterPinLabel.visibility = View.VISIBLE
         binding.tvPinInfoLabel.visibility = View.VISIBLE
         binding.pinIndicatorsLayout.visibility = View.INVISIBLE
@@ -918,12 +933,21 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         binding.bottomKeypadContainer.scaleX = startScale; binding.bottomKeypadContainer.scaleY = startScale; binding.bottomKeypadContainer.alpha = 0f
         binding.tvEnterPinLabel.scaleX = startScale; binding.tvEnterPinLabel.scaleY = startScale; binding.tvEnterPinLabel.alpha = 0f
         binding.tvPinInfoLabel.scaleX = startScale; binding.tvPinInfoLabel.scaleY = startScale; binding.tvPinInfoLabel.alpha = 0f
-
         binding.ivLockIcon.scaleX = startScale; binding.ivLockIcon.scaleY = startScale; binding.ivLockIcon.alpha = 0f
 
-        blurredWallpaperBitmap?.let {
-            binding.imgPinBackgroundBlurred.setImageBitmap(it)
-            binding.imgPinBackgroundBlurred.setColorFilter(Color.parseColor("#99000000"), PorterDuff.Mode.SRC_OVER)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val blurEffect = RenderEffect.createBlurEffect(350f, 350f, Shader.TileMode.CLAMP)
+            binding.imgBackground.setRenderEffect(blurEffect)
+
+            binding.imgBackground.setColorFilter(Color.parseColor("#36666666"), PorterDuff.Mode.SRC_OVER)
+
+            binding.imgPinBackgroundBlurred.visibility = View.GONE
+        } else {
+            blurredWallpaperBitmap?.let {
+                binding.imgPinBackgroundBlurred.setImageBitmap(it)
+                binding.imgPinBackgroundBlurred.setColorFilter(Color.parseColor("#99000000"), PorterDuff.Mode.SRC_OVER)
+                binding.imgPinBackgroundBlurred.visibility = View.VISIBLE
+            }
         }
 
         val duration = 350L
@@ -937,7 +961,9 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             .start()
 
         fun popUpAnim(v: View, delay: Long) {
-            v.animate().scaleX(1f).scaleY(1f).alpha(1f).setDuration(duration).setStartDelay(delay).setInterpolator(popInterpolator).start()
+            v.animate().scaleX(1f).scaleY(1f).alpha(1f)
+                .setDuration(duration).setStartDelay(delay)
+                .setInterpolator(popInterpolator).start()
         }
 
         popUpAnim(binding.tvEnterPinLabel, 0)
@@ -947,6 +973,12 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     }
 
     private fun hidePinScreen() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            binding.imgBackground.setRenderEffect(null)
+            binding.imgBackground.clearColorFilter()
+        }
+        binding.imgPinBackgroundBlurred.visibility = View.GONE
+
         val duration = 250L
         val shrinkInterpolator = AnticipateInterpolator()
 
@@ -977,6 +1009,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             binding.bgPhone, binding.ivPhone, binding.bgCamera, binding.ivCamera,
             binding.statusBarContainer, binding.tvTicker, binding.tvMarqueeBottom
         )
+
         lockscreenViews.forEach {
             it.visibility = View.VISIBLE
             it.animate()
@@ -1179,7 +1212,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         floatActive = fPrefs.getBoolean("FLOAT_IS_ACTIVE", false)
         floatScale = try { fPrefs.getInt("FLOAT_SCALE", 100) } catch (e: Exception) { 100 }
         floatDelay = fPrefs.getInt("FLOAT_DELAY", 0)
-
+        useShakeTrigger = fPrefs.getBoolean("USE_SHAKE_TRIGGER", false)
         var isImageSet = false
 
         floatIsCustom = fPrefs.getBoolean("IS_GALLERY_MODE", false)
@@ -1314,7 +1347,9 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                             .withEndAction {
                                 v.visibility = View.GONE
 
-                                sensorManager.unregisterListener(this@FakeLockActivity, accelerometer)
+                                if (!useShakeTrigger) {
+                                    sensorManager.unregisterListener(this, accelerometer)
+                                }
 
                                 v.alpha = 1f
                                 v.translationX = 0f; v.translationY = 0f
@@ -1332,7 +1367,31 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
-        if (event == null || isBeingDragged || binding.imgFloatObject.visibility != View.VISIBLE) return
+        if (event == null) return
+
+        if (floatActive && useShakeTrigger && binding.imgFloatObject.visibility != View.VISIBLE && !isFloatTriggerCountdown) {
+            val x = event.values[0]
+            val y = event.values[1]
+            val z = event.values[2]
+
+            lastAccel = currentAccel
+            currentAccel = Math.sqrt((x * x + y * y + z * z).toDouble()).toFloat()
+            val delta = currentAccel - lastAccel
+            shakeAccel = shakeAccel * 0.9f + delta
+
+            if (shakeAccel > 10f) {
+                isFloatTriggerCountdown = true
+                vibratePattern(isDouble = true)
+
+                binding.imgFloatObject.removeCallbacks(null)
+                binding.imgFloatObject.postDelayed({
+                    showFloatingObject()
+                    isFloatTriggerCountdown = false
+                }, floatDelay * 1000L)
+            }
+        }
+
+        if (isBeingDragged || binding.imgFloatObject.visibility != View.VISIBLE) return
 
         velX = (velX - (event.values[0] * sensitivity)) * friction
         velY = (velY + (event.values[1] * sensitivity)) * friction

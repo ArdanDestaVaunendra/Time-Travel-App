@@ -383,7 +383,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:scaleX="0.9"
+                android:scaleY="0.9">
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -450,7 +452,7 @@
                         android:id="@+id/btnDeletePin"
                         android:layout_width="72dp"
                         android:layout_height="72dp"
-                        android:layout_margin="10dp"
+                        android:layout_margin="12dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:clickable="true"
                         android:focusable="true"
@@ -467,7 +469,7 @@
                         android:id="@+id/btnOk"
                         android:layout_width="72dp"
                         android:layout_height="72dp"
-                        android:layout_margin="10dp"
+                        android:layout_margin="12dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:clickable="true"
                         android:focusable="true"
