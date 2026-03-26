@@ -104,10 +104,11 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     private var cancelReveal = false
 
     // === VARIABEL AR FLOAT & SENSOR ===
+    private var temporaryBackCardOverride = false
     private lateinit var sensorManager: SensorManager
     private var accelerometer: Sensor? = null
     private var floatActive = false
-    private var floatScale = 100
+    private var floatScale = 91
     private var floatDelay = 0
     private var floatIsCustom = false
     private var floatUri: String? = null
@@ -340,6 +341,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         val is24Hour = prefs.getBoolean("IS_24H", true)
         val timePattern = if (is24Hour) "HH:mm" else "h:mm"
         val bigFormat = SimpleDateFormat(timePattern, Locale.getDefault())
+
         try {
             binding.tvBigClock.text = bigFormat.format(Date(now))
         } catch (e: Exception) {}
@@ -678,15 +680,40 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                     2 -> {
                         val inputStr = currentPinInput
                         val inputInt = inputStr.toIntOrNull() ?: 0
+                        val selectedStack = prefs.getInt("SELECTED_STACK", 0)
 
-                        val bhStack = listOf(
-                            "10c", "7h", "4s", "Ad", "Jd", "6c", "7c", "9s", "6d", "Ac",
-                            "Jc", "8h", "5s", "2d", "Qd", "3h", "Kh", "10s", "7d", "2c",
-                            "Qc", "9h", "6s", "3d", "Kd", "4h", "As", "Js", "8d", "3c",
-                            "Kc", "10h", "7s", "4d", "8c", "5h", "2s", "Qs", "9d", "4c",
-                            "Ah", "Jh", "8s", "5d", "9c", "6h", "3s", "Ks", "10d", "5c",
-                            "2h", "Qh"
-                        )
+                        val bhStack = when (selectedStack) {
+                            1 -> {
+                                listOf(
+                                    "4c", "2h", "7d", "3c", "4h", "6d", "As", "5h", "9s", "2s",
+                                    "Qh", "3d", "Qc", "8h", "6s", "5s", "9h", "Kc", "2d", "Jh",
+                                    "3s", "8s", "6h", "10c", "5d", "Kd", "2c", "3h", "8d", "5c",
+                                    "Ks", "Jd", "8c", "10s", "Kh", "Jc", "7s", "10h", "Ad", "4s",
+                                    "7h", "4d", "Ac", "9c", "Js", "Qd", "7c", "Qs", "10d", "6c",
+                                    "Ah", "9d"
+                                )
+                            }
+                            2 -> {
+                                listOf(
+                                    "Js", "Kc", "5c", "2h", "9s", "As", "3h", "6c", "8d", "Ac",
+                                    "10s", "5h", "2d", "Kd", "7d", "8c", "3s", "Ad", "7s", "5s",
+                                    "Qd", "Ah", "8s", "3d", "7h", "Qh", "5d", "7c", "4h", "Kh",
+                                    "4d", "10d", "Jc", "Jh", "10c", "Jd", "4s", "10h", "6h", "3c",
+                                    "2s", "9h", "Ks", "6s", "4c", "8h", "9c", "Qs", "6d", "Qc",
+                                    "2c", "9d"
+                                )
+                            }
+                            else -> {
+                                listOf(
+                                    "10c", "7h", "4s", "Ad", "Jd", "6c", "7c", "9s", "6d", "Ac",
+                                    "Jc", "8h", "5s", "2d", "Qd", "3h", "Kh", "10s", "7d", "2c",
+                                    "Qc", "9h", "6s", "3d", "Kd", "4h", "As", "Js", "8d", "3c",
+                                    "Kc", "10h", "7s", "4d", "8c", "5h", "2s", "Qs", "9d", "4c",
+                                    "Ah", "Jh", "8s", "5d", "9c", "6h", "3s", "Ks", "10d", "5c",
+                                    "2h", "Qh"
+                                )
+                            }
+                        }
 
                         var isPredictionValid = false
 
@@ -721,6 +748,8 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                             if (inputInt == 0) {
                                 forceCardPrediction = bhStack.joinToString(" - ")
                                 isPredictionValid = true
+                                temporaryBackCardOverride = true
+
                             } else if (inputInt in 1..bhStack.size) {
                                 forceCardPrediction = bhStack[inputInt - 1]
                                 isPredictionValid = true
@@ -1168,20 +1197,46 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             }
         }
 
-        if (!isImageSet) {
-            try {
-                val forcedCardName = prefs.getString("FORCED_FLOAT_CARD", null)
-                if (forcedCardName != null) {
-                    val resId = resources.getIdentifier(forcedCardName, "drawable", packageName)
-                    if (resId != 0) {
-                        binding.imgFloatObject.setImageResource(resId)
-                        isImageSet = true
-                    } else {
-                        prefs.edit().remove("FORCED_FLOAT_CARD").apply()
-                    }
+        if (temporaryBackCardOverride) {
+            val useRedBack = fPrefs.getBoolean("USE_RED_BACK", false)
+            if (useRedBack) {
+                binding.imgFloatObject.setImageResource(R.drawable.back_card_red)
+            } else {
+                binding.imgFloatObject.setImageResource(R.drawable.back_card_blue)
+            }
+            binding.imgFloatObject.scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
+            isImageSet = true
+        } else {
+            floatIsCustom = fPrefs.getBoolean("IS_GALLERY_MODE", false)
+            floatUri = fPrefs.getString("FLOAT_CUSTOM_URI", null)
+
+            if (floatIsCustom && floatUri != null) {
+                try {
+                    binding.imgFloatObject.setImageURI(Uri.parse(floatUri))
+                    isImageSet = true
+                } catch (t: Throwable) {
+                    t.printStackTrace()
+                    fPrefs.edit().putBoolean("IS_GALLERY_MODE", false).apply()
+                    fPrefs.edit().remove("FLOAT_CUSTOM_URI").apply()
+                    isImageSet = false
                 }
-            } catch (t: Throwable) {
-                prefs.edit().remove("FORCED_FLOAT_CARD").apply()
+            }
+
+            if (!isImageSet) {
+                try {
+                    val forcedCardName = prefs.getString("FORCED_FLOAT_CARD", null)
+                    if (forcedCardName != null) {
+                        val resId = resources.getIdentifier(forcedCardName, "drawable", packageName)
+                        if (resId != 0) {
+                            binding.imgFloatObject.setImageResource(resId)
+                            isImageSet = true
+                        } else {
+                            prefs.edit().remove("FORCED_FLOAT_CARD").apply()
+                        }
+                    }
+                } catch (t: Throwable) {
+                    prefs.edit().remove("FORCED_FLOAT_CARD").apply()
+                }
             }
         }
 

@@ -9,4 +9,10 @@
         <item>Super Slow (x0.45)</item>
         <item>Hyper Slow (x0.2)</item>
     </string-array>
+
+    <string-array name="stack_options">
+        <item>Bart Harding Stack</item>
+        <item>Mnemonica (Tamariz)</item>
+        <item>Aronson Stack</item>
+    </string-array>
 </resources>

@@ -100,6 +100,23 @@ class ConfigActivity : AppCompatActivity() {
             override fun onNothingSelected(parent: AdapterView<*>) {}
         }
 
+        val stackAdapter = android.widget.ArrayAdapter.createFromResource(
+            this,
+            R.array.stack_options,
+            R.layout.spinner_item
+        )
+        stackAdapter.setDropDownViewResource(R.layout.spinner_item)
+        binding.spinnerStackSystem.adapter = stackAdapter
+
+        binding.spinnerStackSystem.setSelection(prefs.getInt("SELECTED_STACK", 0))
+
+        binding.spinnerStackSystem.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
+                prefs.edit().putInt("SELECTED_STACK", position).apply()
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        }
+
         loadSavedSettings()
         updateUIText()
 
@@ -110,6 +127,8 @@ class ConfigActivity : AppCompatActivity() {
         binding.rgDateLanguage.setOnCheckedChangeListener { _, checkedId ->
             prefs.edit().putString("DATE_LANGUAGE", if (checkedId == R.id.rbLangEN) "en" else "id").apply()
         }
+
+
 
         setupLivePreview(binding.etCustomCarrier, "Operator Text")
         setupLivePreview(binding.etCustomMarquee, "Running Text")
@@ -601,47 +620,7 @@ class ConfigActivity : AppCompatActivity() {
 
     private fun showSecretManualDialog() {
         val manualHtml = """
-            <font color="#5800D1"><b><u>[1] SECRET PIN INPUTS (THE HIDDEN CORE)</u></b></font><br>
-            These commands are NOT in the dashboard settings. To execute them, you MUST <b>HOLD the 'OK' button</b> to activate Secret Mode. The system will silently listen for your input without giving visual feedback.<br><br>
-            
-            <font color="#CCCCCC">━━━━━━━━━━━━━━━━━━━━</font><br><br>
-            
-            <b><u>A. TIME JUMP INJECTION (DYNAMIC OFFSET)</u></b><br>
-            <i>Function: Silently injects a custom time offset (in minutes) on the fly before triggering the Time Travel illusion.</i><br>
-            &#8226; <b>Formula:</b> Hold OK &#8594; 000 &#8594; <b>OK</b> &#8594; [Minutes] &#8594; <b>OK</b><br>
-            &#8226; <i>Future (+8 mins):</i> Enter 8<br>
-            &#8226; <i>Past (-8 mins):</i> Enter 08<br><br>
-            
-            <font color="#CCCCCC">━━━━━━━━━━━━━━━━━━━━</font><br><br>
-            
-            <b><u>B. SET AR FLOAT CARD (FORCED PREDICTION)</u></b><br>
-            <i>Function: Silently forces the AR Floating Object to display a specific playing card, overriding the gallery/dashboard settings.</i><br>
-            &#8226; <b>Formula:</b> Hold OK &#8594; [Card Value] &#8594; <b>OK</b> &#8594; [Card Suit] &#8594; <b>OK</b><br>
-            &#8226; <i>Values:</i> Ace=1, Jack=11, Queen=12, King=13 (Numbers 2-10 are normal)<br>
-            &#8226; <i>Suits:</i> 1=Diamonds, 2=Clubs, 3=Hearts, 4=Spades<br>
-            &#8226; <i>Example (Queen of Hearts):</i> Hold OK &#8594; 12 &#8594; OK &#8594; 3 &#8594; OK<br><br>
-            
-            <font color="#CCCCCC">━━━━━━━━━━━━━━━━━━━━</font><br><br>
-
-            <b><u>C. BART HARDING STACK (MARQUEE TEXT REVEAL)</u></b><br>
-            <i>Function: Injects specific stack information into the running text or carrier as a prediction.</i><br>
-            &#8226; <b>Show Full Stack:</b> Hold OK &#8594; 0 &#8594; OK &#8594; 0 &#8594; OK<br>
-            &#8226; <b>Show Card at Position (1-52):</b> Hold OK &#8594; 0 &#8594; OK &#8594; [Position] &#8594; OK<br>
-            &#8226; <b>Find Position of a Card:</b> Hold OK &#8594; 0[Value] &#8594; OK &#8594; [Suit] &#8594; OK <i>(e.g., 08 &#8594; OK &#8594; 3 &#8594; OK)</i><br>
-            &#8226; <b>Find Cards Before & After:</b> Hold OK &#8594; 00[Value] &#8594; OK &#8594; [Suit] &#8594; OK <i>(e.g., 008 &#8594; OK &#8594; 3 &#8594; OK)</i><br><br>
-
-            <font color="#777777"><i>*Bart Harding Stack Reference:*</i></font><br>
-            <font size="2">10c, 7h, 4s, Ad, Jd, 6c, 7c, 9s, 6d, Ac, Jc, 8h, 5s, 2d, Qd, 3h, Kh, 10s, 7d, 2c, Qc, 9h, 6s, 3d, Kd, 4h, As, Js, 8d, 3c, Kc, 10h, 7s, 4d, 8c, 5h, 2s, Qs, 9d, 4c, Ah, Jh, 8s, 5d, 9c, 6h, 3s, Ks, 10d, 5c, 2h, Qh</font><br><br>
-
-            <font color="#CCCCCC">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</font><br><br>
-
-            <font color="#5800D1"><b><u>[2] HARDWARE CONTROLS</u></b></font><br>
-            &#8226; <b>Physical Lock Button (Lockscreen):</b> Instantly cuts off the running text if you need to stop it cleanly mid-performance.<br>
-            &#8226; <b>Physical Lock Button (PIN View):</b> Acts as a 'Back' button to return to the lockscreen.<br><br>
-
-            <font color="#CCCCCC">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</font><br><br>
-
-            <font color="#5800D1"><b><u>[3] FEATURES & SETTINGS (DASHBOARD)</u></b></font><br>
+            <font color="#5800D1"><b><u>[1] FEATURES & SETTINGS (DASHBOARD)</u></b></font><br>
             <b><u>A. TIME TRAVEL</u></b><br>
             &#8226; <i>Enable Time Travel:</i> Master switch to activate the clock manipulation illusion.<br>
             &#8226; <i>Trigger Method:</i> Choose whether to initiate the jump using Volume Down or Double Tap.<br>
@@ -655,6 +634,7 @@ class ConfigActivity : AppCompatActivity() {
             &#8226; <i>Enable PIN:</i> Activates the fake lockscreen keypad. (Note: If disabled, AR Float will only display the card back).<br>
             &#8226; <i>Custom PIN:</i> Set your unlock code (Default: 123456). Entering this normally simply unlocks the screen.<br>
             &#8226; <i>Prediction Language:</i> Choose English or Indonesian for the predicted card text.<br>
+            &#8226; <i>Card Stack System:</i> Choose the memorized deck system (Bart Harding, Mnemonica, or Aronson) for your prediction routines.<br>
             &#8226; <i>Enable Secret Message:</i> Master switch for the text reveal prediction.<br>
             &#8226; <i>Message Trigger:</i> Automatically bound to the opposite of your Time Jump trigger.<br>
             &#8226; <i>Change Target:</i> Inject the prediction into the Carrier (Top Left), Marquee (Bottom Running Text), or Both.<br>
@@ -681,6 +661,54 @@ class ConfigActivity : AppCompatActivity() {
 
             <font color="#CCCCCC">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</font><br><br>
 
+            <font color="#5800D1"><b><u>[2] HARDWARE CONTROLS</u></b></font><br>
+            &#8226; <b>Hold 'OK' Button (PIN View):</b> Silently activates Secret Mode, allowing you to input hidden PIN commands.<br>
+            &#8226; <b>Physical Lock Button (Lockscreen):</b> Instantly cuts off the running text if you need to stop it cleanly mid-performance.<br>
+            &#8226; <b>Physical Lock Button (PIN View):</b> Acts as a 'Back' button to return to the lockscreen.<br><br>
+            
+            <font color="#CCCCCC">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</font><br><br>
+
+            <font color="#5800D1"><b><u>[3] SECRET PIN INPUTS (THE HIDDEN CORE)</u></b></font><br>
+            These commands are NOT in the dashboard settings. To execute them, you MUST <b>HOLD the 'OK' button</b> to activate Secret Mode. The system will silently listen for your input without giving visual feedback.<br><br>
+            
+            <font color="#CCCCCC">━━━━━━━━━━━━━━━━━━━━</font><br><br>
+            
+            <b><u>A. TIME JUMP INJECTION (DYNAMIC OFFSET)</u></b><br>
+            <i>Function: Silently injects a custom time offset (in minutes) on the fly before triggering the Time Travel illusion.</i><br>
+            &#8226; <b>Formula:</b> Hold OK &#8594; 000 &#8594; <b>OK</b> &#8594; [Minutes] &#8594; <b>OK</b><br>
+            &#8226; <i>Future (+8 mins):</i> Enter 8<br>
+            &#8226; <i>Past (-8 mins):</i> Enter 08<br><br>
+            
+            <font color="#CCCCCC">━━━━━━━━━━━━━━━━━━━━</font><br><br>
+            
+            <b><u>B. SET AR FLOAT CARD (FORCED PREDICTION)</u></b><br>
+            <i>Function: Silently forces the AR Floating Object to display a specific playing card, overriding the gallery/dashboard settings.</i><br>
+            &#8226; <b>Formula:</b> Hold OK &#8594; [Card Value] &#8594; <b>OK</b> &#8594; [Card Suit] &#8594; <b>OK</b><br>
+            &#8226; <i>Values:</i> Ace=1, Jack=11, Queen=12, King=13 (Numbers 2-10 are normal)<br>
+            &#8226; <i>Suits:</i> 1=Diamonds, 2=Clubs, 3=Hearts, 4=Spades<br>
+            &#8226; <i>Example (Queen of Hearts):</i> Hold OK &#8594; 12 &#8594; OK &#8594; 3 &#8594; OK<br><br>
+            
+            <font color="#CCCCCC">━━━━━━━━━━━━━━━━━━━━</font><br><br>
+
+            <b><u>C. CARD STACK SYSTEM (MARQUEE TEXT REVEAL & BACK CARD FORCING)</u></b><br>
+            <i>Function: Injects specific stack information into the running text or carrier as a prediction. The stack used will depend on your selection in the dashboard (Bart Harding, Mnemonica, or Aronson).</i><br>
+            &#8226; <b>Show Full Stack & Force Back Card:</b> Hold OK &#8594; 0 &#8594; OK &#8594; 0 &#8594; OK<br>
+            <i>(Note: This command has a dual effect. Not only does it reveal the stack in the text, but it also temporarily forces the AR Float to show a facedown 'Back Card' without saving it to memory. The color of the back card will follow your dashboard settings.)</i><br>
+            &#8226; <b>Show Card at Position (1-52):</b> Hold OK &#8594; 0 &#8594; OK &#8594; [Position] &#8594; OK<br>
+            &#8226; <b>Find Position of a Card:</b> Hold OK &#8594; 0[Value] &#8594; OK &#8594; [Suit] &#8594; OK <i>(e.g., 08 &#8594; OK &#8594; 3 &#8594; OK)</i><br>
+            &#8226; <b>Find Cards Before & After:</b> Hold OK &#8594; 00[Value] &#8594; OK &#8594; [Suit] &#8594; OK <i>(e.g., 008 &#8594; OK &#8594; 3 &#8594; OK)</i><br><br>
+
+            <font color="#777777"><i>*Bart Harding Stack Reference:*</i></font><br>
+            <font size="2">10c, 7h, 4s, Ad, Jd, 6c, 7c, 9s, 6d, Ac, Jc, 8h, 5s, 2d, Qd, 3h, Kh, 10s, 7d, 2c, Qc, 9h, 6s, 3d, Kd, 4h, As, Js, 8d, 3c, Kc, 10h, 7s, 4d, 8c, 5h, 2s, Qs, 9d, 4c, Ah, Jh, 8s, 5d, 9c, 6h, 3s, Ks, 10d, 5c, 2h, Qh</font><br><br>
+
+            <font color="#777777"><i>*Mnemonica Stack Reference:*</i></font><br>
+            <font size="2">4c, 2h, 7d, 3c, 4h, 6d, As, 5h, 9s, 2s, Qh, 3d, Qc, 8h, 6s, 5s, 9h, Kc, 2d, Jh, 3s, 8s, 6h, 10c, 5d, Kd, 2c, 3h, 8d, 5c, Ks, Jd, 8c, 10s, Kh, Jc, 7s, 10h, Ad, 4s, 7h, 4d, Ac, 9c, Js, Qd, 7c, Qs, 10d, 6c, Ah, 9d</font><br><br>
+            
+            <font color="#777777"><i>*Aronson Stack Reference:*</i></font><br>
+            <font size="2">Js, Kc, 5c, 2h, 9s, As, 3h, 6c, 8d, Ac, 10s, 5h, 2d, Kd, 7d, 8c, 3s, Ad, 7s, 5s, Qd, Ah, 8s, 3d, 7h, Qh, 5d, 7c, 4h, Kh, 4d, 10d, Jc, Jh, 10c, Jd, 4s, 10h, 6h, 3c, 2s, 9h, Ks, 6s, 4c, 8h, 9c, Qs, 6d, Qc, 2c, 9d</font><br><br>
+            
+            <font color="#CCCCCC">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</font><br><br>
+
             <font color="#5800D1"><b><u>[4] PRO PERFORMANCE TIPS & ROUTINES</u></b></font><br>
             &#8226; <font color="#D12012"><b><u>WARNING:</u></b></font> Never swipe down from the top edge during a performance. This exposes the real Android status bar, ruining the illusion.<br>
             &#8226; <b><u>Seamless Entry (Biometrics):</u></b> Enable Fingerprint or Face Unlock on your real phone. Unlocking the device biometrically will bypass the real PIN screen and land directly on the Fake Lockscreen. This looks incredibly natural.<br>
@@ -691,7 +719,7 @@ class ConfigActivity : AppCompatActivity() {
             &#8226; <b><u>Time Travel Routine:</u></b> Highly effective when combined with a Stripper Deck to create an impossible, back-to-back timeline and location effect.<br>
             &#8226; <b><u>Marquee Peek:</u></b> Use the running text as a covert peek device for mentalism routines without arousing suspicion.<br>
             &#8226; <b><u>Notifications & DND:</u></b> Always activate Do Not Disturb (DND) or disable pop-ups. A real notification popping up will instantly break the illusion.<br>
-            &#8226; <b><u>Handling & Misdirection:</u></b> Treat the phone casually. Practice Secret PIN inputs blindly to maintain eye contact—this is your best misdirection.<br>
+            &#8226; <b><u>Handling & Misdirection:</u></b> Treat the phone casually. Practice Secret PIN inputs blindly to maintain eye contact-this is your best misdirection.<br>
             &#8226; <b><u>Functional Shortcuts:</u></b> The Camera, Phone, and Emergency Call buttons are fully operational. Use them casually to validate the lockscreen, but do not over-prove.<br>
             &#8226; <b><u>Safe Navigation:</u></b> Always use the physical lock button to back out of the PIN view to the lockscreen. This safely prevents the real Android navigation bar from accidentally appearing.<br><br>
             
