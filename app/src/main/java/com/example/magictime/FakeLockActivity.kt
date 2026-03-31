@@ -58,10 +58,13 @@ import kotlinx.coroutines.withContext
 @Suppress("DEPRECATION")
 class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
+    private var isVolumeTriggerForTime = true
     private lateinit var binding: ActivityFakeLockBinding
     private val prefs by lazy { getSharedPreferences("MagicPrefs", Context.MODE_PRIVATE) }
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var gestureDetector: GestureDetector
+    private lateinit var prefManager: PreferenceManager
+    private lateinit var appSettings: AppSettings
 
     // === VARIABEL GENERAL & UI ===
     private var blurredWallpaperBitmap: Bitmap? = null
@@ -172,6 +175,8 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         try {
             binding = ActivityFakeLockBinding.inflate(layoutInflater)
             setContentView(binding.root)
+            prefManager = PreferenceManager(this)
+            appSettings = prefManager.getActiveSession()
         } catch (e: Exception) {
             e.printStackTrace()
             return
@@ -187,7 +192,8 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
         loadSettings()
 
-        isPinEnabled = prefs.getBoolean("ENABLE_PIN", true)
+        val isProfileMode = (appSettings.currentStatusMode == "PRESET") || (appSettings.currentStatusMode == "LOADED")
+        isPinEnabled = if (isProfileMode) appSettings.isPinEnabled else prefs.getBoolean("ENABLE_PIN", true)
         correctPin = prefs.getString("CUSTOM_PIN", "123456") ?: "123456"
 
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
@@ -211,13 +217,16 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         registerReceiver(batteryReceiver, filter)
         startClockLoop()
 
+        appSettings = prefManager.getActiveSession()
+        loadSettings()
+        loadFloatConfigs()
+
         loadWallpaper()
         try { hideSystemUI() } catch (e: Exception) {}
 
-        val fPrefs = getSharedPreferences("MagicTimePrefs", MODE_PRIVATE)
-        useShakeTrigger = fPrefs.getBoolean("USE_SHAKE_TRIGGER", false)
+        sensorManager.unregisterListener(this)
 
-        if (fPrefs.getBoolean("FLOAT_IS_ACTIVE", false)) {
+        if (floatActive && useShakeTrigger) {
             accelerometer?.let {
                 sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME)
             }
@@ -235,72 +244,91 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     // INITIALIZATION & SETTINGS
     // ==========================================
     private fun loadSettings() {
-        val isTimeTravelEnabled = prefs.getBoolean("ENABLE_TIME_TRAVEL", true)
+        isTimeTravelEnabled = appSettings.activeRoutines.contains("TIMEJUMP")
 
-        if (!isTimeTravelEnabled) {
-            currentDisplayOffset = 0L
+        if (isTimeTravelEnabled) {
+            currentDisplayOffset = appSettings.timeJumpOffset * 60L
         } else {
-            currentDisplayOffset = prefs.getInt("OFFSET_SEC", 0).toLong()
+            currentDisplayOffset = 0L
         }
-
-        delayStartMs = prefs.getInt("DELAY_MS", 0).toLong()
-        timeSpeedMultiplier = prefs.getFloat("TIME_SPEED", 1.0f)
+        delayStartMs = appSettings.globalDelay
+        timeSpeedMultiplier = appSettings.timeFlowSpeed
 
         baseRealTime = System.currentTimeMillis()
         baseSyntheticTime = System.currentTimeMillis() + (currentDisplayOffset * 1000)
 
-        val showCarrier = prefs.getBoolean("SHOW_CARRIER", true)
+        val showCarrier = appSettings.showOperator
         binding.tvTicker.visibility = if (showCarrier) View.VISIBLE else View.INVISIBLE
-        binding.tvTicker.text = prefs.getString("CUSTOM_CARRIER", "TELKOMSEL · Emergency call only")
+        binding.tvTicker.text = appSettings.operatorText
 
-        val showMarquee = prefs.getBoolean("SHOW_MARQUEE", true)
+        val showMarquee = appSettings.showRunningText
         binding.tvMarqueeBottom.visibility = if (showMarquee) View.VISIBLE else View.INVISIBLE
-        binding.tvMarqueeBottom.text = prefs.getString("CUSTOM_MARQUEE", "custom text here")
+        binding.tvMarqueeBottom.text = appSettings.marqueeText
 
-        val isWifiOn = prefs.getBoolean("SHOW_WIFI", true)
+        isPinEnabled = appSettings.isPinEnabled
+        isRevealEnabled = appSettings.activeRoutines.contains("PREDICTION")
+        revealTarget = appSettings.predictionTarget
+        useIndonesianLanguage = (appSettings.predictionLanguage == "id")
+
+        val isProfileMode = (appSettings.currentStatusMode == "PRESET") || (appSettings.currentStatusMode == "LOADED")
+
+        val isWifiOn: Boolean
+        val use5G: Boolean
+        val sim1On: Boolean
+        val sim2On: Boolean
+
+        if (isProfileMode) {
+            val netMode = appSettings.networkMode.uppercase()
+            isWifiOn = netMode.contains("WIFI")
+            use5G = netMode.contains("5G")
+            sim1On = netMode.contains("SIM1") || netMode.contains("DUAL") || (!isWifiOn)
+            sim2On = netMode.contains("SIM2") || netMode.contains("DUAL")
+        } else {
+            isWifiOn = prefs.getBoolean("SHOW_WIFI", true)
+            use5G = prefs.getBoolean("USE_5G", false)
+            sim1On = prefs.getBoolean("SIM1_4G", true)
+            sim2On = prefs.getBoolean("SIM2_4G", false)
+        }
+
         binding.ivWifi.visibility = if (isWifiOn) View.VISIBLE else View.GONE
 
         val plainColor = Color.parseColor("#4BFFFFFF")
-        val use5G = prefs.getBoolean("USE_5G", false)
         val networkIconRes = if (use5G) R.drawable.ic_5g else R.drawable.ic_4g
-
         binding.iv4g1.setImageResource(networkIconRes)
         binding.iv4g2.setImageResource(networkIconRes)
 
         if (isWifiOn) {
             binding.iv4g1.visibility = View.GONE
             binding.ivSignal1.setColorFilter(plainColor)
-
             binding.iv4g2.visibility = View.GONE
             binding.ivSignal2.setColorFilter(plainColor)
         } else {
-            if (prefs.getBoolean("SIM1_4G", true)) {
+            if (sim1On) {
                 binding.iv4g1.visibility = View.VISIBLE; binding.ivSignal1.clearColorFilter()
             } else {
                 binding.iv4g1.visibility = View.GONE; binding.ivSignal1.setColorFilter(plainColor)
             }
-
-            if (prefs.getBoolean("SIM2_4G", false)) {
+            if (sim2On) {
                 binding.iv4g2.visibility = View.VISIBLE; binding.ivSignal2.clearColorFilter()
             } else {
                 binding.iv4g2.visibility = View.GONE; binding.ivSignal2.setColorFilter(plainColor)
             }
         }
 
-        isCardCodeEnabled = prefs.getBoolean("ENABLE_CARD_CODE", true)
-        revealDurationMs = prefs.getInt("REVEAL_DURATION", 7) * 1000L
+        revealDurationMs = if (isProfileMode) {
+            appSettings.predictionDuration
+        } else {
+            prefs.getInt("REVEAL_DURATION", 7) * 1000L
+        }
 
-        isRevealEnabled = prefs.getBoolean("ENABLE_REVEAL", false)
         revealText = prefs.getString("REVEAL_TEXT", "") ?: ""
         revealDelay = prefs.getInt("REVEAL_DELAY", 3)
-        revealTarget = prefs.getString("REVEAL_TARGET", "BOTH") ?: "BOTH"
 
-        val predLangCode = prefs.getString("PREDICTION_LANG", "id") ?: "id"
-        useIndonesianLanguage = (predLangCode == "id")
+        isVolumeTriggerForTime = if (isProfileMode) appSettings.isVolumeTriggerForTime else prefs.getBoolean("TRIGGER_VOLUME", true)
     }
 
     private fun loadWallpaper() {
-        val uriString = prefs.getString("WALLPAPER_URI", null)
+        val uriString = appSettings.wallpaperPath
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
@@ -352,7 +380,8 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     private fun updateTimeUI() {
         val now = System.currentTimeMillis() + (currentDisplayOffset * 1000)
 
-        val is24Hour = prefs.getBoolean("IS_24H", true)
+        val isProfileMode = (appSettings.currentStatusMode == "PRESET") || (appSettings.currentStatusMode == "LOADED")
+        val is24Hour = if (isProfileMode) appSettings.is24HourFormat else prefs.getBoolean("IS_24H", true)
         val timePattern = if (is24Hour) "HH:mm" else "h:mm"
         val bigFormat = SimpleDateFormat(timePattern, Locale.getDefault())
 
@@ -360,7 +389,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             binding.tvBigClock.text = bigFormat.format(Date(now))
         } catch (e: Exception) {}
 
-        val langCode = prefs.getString("DATE_LANGUAGE", "id") ?: "id"
+        val langCode = appSettings.dateLanguage
         val datePattern: String
         val locale: Locale
 
@@ -424,7 +453,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
             if (binding.imgFloatObject.visibility == View.VISIBLE) return true
 
-            val isVolumeForTime = prefs.getBoolean("TRIGGER_VOLUME", true)
+            val isVolumeForTime = isVolumeTriggerForTime
             if (isVolumeForTime) {
                 triggerMagic()
             } else {
@@ -449,7 +478,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             override fun onDoubleTap(e: MotionEvent): Boolean {
                 if (binding.imgFloatObject.visibility == View.VISIBLE) return true
 
-                if (prefs.getBoolean("TRIGGER_VOLUME", true)) {
+                if (isVolumeTriggerForTime) {
                     triggerSecretMessage()
                 } else {
                     triggerMagic()
@@ -696,7 +725,16 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                     2 -> {
                         val inputStr = currentPinInput
                         val inputInt = inputStr.toIntOrNull() ?: 0
-                        val selectedStack = prefs.getInt("SELECTED_STACK", 0)
+                        val isPresetMode = (appSettings.currentStatusMode == "PRESET")
+                        val selectedStack = if (isPresetMode) {
+                            when (appSettings.stackSystem.uppercase()) {
+                                "MNEMONICA" -> 1
+                                "ARONSON" -> 2
+                                else -> 0
+                            }
+                        } else {
+                            prefs.getInt("SELECTED_STACK", 0)
+                        }
 
                         val bhStack = when (selectedStack) {
                             1 -> {
@@ -1142,10 +1180,11 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         if (!isRevealed) return
 
         v.animate().alpha(0f).setDuration(150).withEndAction {
+            val isProfileMode = (appSettings.currentStatusMode == "PRESET") || (appSettings.currentStatusMode == "LOADED")
             val originalText = if (v.id == binding.tvTicker.id) {
-                prefs.getString("CUSTOM_CARRIER", "TELKOMSEL") ?: "TELKOMSEL"
+                if (isProfileMode) appSettings.operatorText else prefs.getString("CUSTOM_CARRIER", "TELKOMSEL") ?: "TELKOMSEL"
             } else {
-                prefs.getString("CUSTOM_MARQUEE", "Running Text") ?: "Running Text"
+                if (isProfileMode) appSettings.marqueeText else prefs.getString("CUSTOM_MARQUEE", "Running Text") ?: "Running Text"
             }
 
             v.text = originalText
@@ -1178,10 +1217,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         )
         viewsToHide.forEach { it.visibility = View.INVISIBLE }
 
-        handler.postDelayed({
-            finishAndRemoveTask()
-            overridePendingTransition(0, android.R.anim.fade_out)
-        }, duration)
+        handler.postDelayed({ exitToHomeScreen() }, duration)
     }
 
     // ==========================================
@@ -1209,107 +1245,63 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
     private fun loadFloatConfigs() {
         val fPrefs = getSharedPreferences("MagicTimePrefs", MODE_PRIVATE)
-        floatActive = fPrefs.getBoolean("FLOAT_IS_ACTIVE", false)
-        floatScale = try { fPrefs.getInt("FLOAT_SCALE", 100) } catch (e: Exception) { 100 }
-        floatDelay = fPrefs.getInt("FLOAT_DELAY", 0)
-        useShakeTrigger = fPrefs.getBoolean("USE_SHAKE_TRIGGER", false)
-        var isImageSet = false
 
-        floatIsCustom = fPrefs.getBoolean("IS_GALLERY_MODE", false)
-        floatUri = fPrefs.getString("FLOAT_CUSTOM_URI", null)
+        floatActive = appSettings.activeRoutines.contains("FLOAT")
+        floatScale = (appSettings.objectScale * 100).toInt()
+        val isProfileMode = (appSettings.currentStatusMode == "PRESET") || (appSettings.currentStatusMode == "LOADED")
 
-        if (floatIsCustom && floatUri != null) {
-            try {
-                binding.imgFloatObject.setImageURI(Uri.parse(floatUri))
-                isImageSet = true
-            } catch (t: Throwable) {
-                t.printStackTrace()
-                fPrefs.edit().putBoolean("IS_GALLERY_MODE", false).apply()
-                fPrefs.edit().remove("FLOAT_CUSTOM_URI").apply()
-                isImageSet = false
-            }
+        if (isProfileMode) {
+            useShakeTrigger = false
+        } else {
+            useShakeTrigger = appSettings.isShakeTriggerEnabled
         }
 
+        floatDelay = fPrefs.getInt("FLOAT_DELAY", 0)
+
+        var isImageSet = false
+        floatUri = appSettings.floatTargetCardPath
+
         if (temporaryBackCardOverride) {
-            val useRedBack = fPrefs.getBoolean("USE_RED_BACK", false)
-            if (useRedBack) {
-                binding.imgFloatObject.setImageResource(R.drawable.back_card_red)
-            } else {
-                binding.imgFloatObject.setImageResource(R.drawable.back_card_blue)
-            }
+            if (appSettings.useRedCardBack) binding.imgFloatObject.setImageResource(R.drawable.back_card_red)
+            else binding.imgFloatObject.setImageResource(R.drawable.back_card_blue)
             binding.imgFloatObject.scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
             isImageSet = true
         } else {
-            floatIsCustom = fPrefs.getBoolean("IS_GALLERY_MODE", false)
-            floatUri = fPrefs.getString("FLOAT_CUSTOM_URI", null)
-
-            if (floatIsCustom && floatUri != null) {
-                try {
-                    binding.imgFloatObject.setImageURI(Uri.parse(floatUri))
-                    isImageSet = true
-                } catch (t: Throwable) {
-                    t.printStackTrace()
-                    fPrefs.edit().putBoolean("IS_GALLERY_MODE", false).apply()
-                    fPrefs.edit().remove("FLOAT_CUSTOM_URI").apply()
-                    isImageSet = false
-                }
-            }
-
-            if (!isImageSet) {
-                try {
-                    val forcedCardName = prefs.getString("FORCED_FLOAT_CARD", null)
-                    if (forcedCardName != null) {
-                        val resId = resources.getIdentifier(forcedCardName, "drawable", packageName)
-                        if (resId != 0) {
-                            binding.imgFloatObject.setImageResource(resId)
-                            isImageSet = true
-                        } else {
-                            prefs.edit().remove("FORCED_FLOAT_CARD").apply()
-                        }
+            if (floatUri != null) {
+                if (floatUri!!.startsWith("content://")) {
+                    try {
+                        binding.imgFloatObject.setImageURI(Uri.parse(floatUri))
+                        isImageSet = true
+                    } catch (t: Throwable) { t.printStackTrace() }
+                } else {
+                    val resId = resources.getIdentifier(floatUri, "drawable", packageName)
+                    if (resId != 0) {
+                        binding.imgFloatObject.setImageResource(resId)
+                        isImageSet = true
                     }
-                } catch (t: Throwable) {
-                    prefs.edit().remove("FORCED_FLOAT_CARD").apply()
                 }
-            }
-        }
-
-        val speedMode = fPrefs.getString("FLOAT_SPEED_MODE", "MEDIUM")
-        when (speedMode) {
-            "SLOW" -> {
-                friction = 0.50f
-                sensitivity = 0.75f
-            }
-            "FAST" -> {
-                friction = 0.80f
-                sensitivity = 1.20f
-            }
-            else -> {
-                friction = 0.65f
-                sensitivity = 1.00f
             }
         }
 
         if (!isImageSet) {
-            try {
-                val useRedBack = fPrefs.getBoolean("USE_RED_BACK", false)
-                if (useRedBack) {
-                    binding.imgFloatObject.setImageResource(R.drawable.back_card_red)
-                } else {
-                    binding.imgFloatObject.setImageResource(R.drawable.back_card_blue)
-                }
-            } catch (t: Throwable) { t.printStackTrace() }
+            if (appSettings.useRedCardBack) binding.imgFloatObject.setImageResource(R.drawable.back_card_red)
+            else binding.imgFloatObject.setImageResource(R.drawable.back_card_blue)
+        }
+
+        val speedMode = fPrefs.getString("FLOAT_SPEED_MODE", "MEDIUM")
+        when (speedMode) {
+            "SLOW" -> { friction = 0.50f; sensitivity = 0.75f }
+            "FAST" -> { friction = 0.80f; sensitivity = 1.20f }
+            else -> { friction = 0.65f; sensitivity = 1.00f }
         }
 
         try {
             val safeScreenWidth = if (screenWidth > 0) screenWidth.toFloat() else resources.displayMetrics.widthPixels.toFloat()
             val targetWidth = (floatScale / 100f) * safeScreenWidth
             val targetHeight = targetWidth * 1.41f
-
             val params = binding.imgFloatObject.layoutParams
-            params.width = targetWidth.toInt()
-            params.height = targetHeight.toInt()
+            params.width = targetWidth.toInt(); params.height = targetHeight.toInt()
             binding.imgFloatObject.layoutParams = params
-
             binding.imgFloatObject.scaleType = android.widget.ImageView.ScaleType.FIT_XY
             binding.imgFloatObject.requestLayout()
         } catch (t: Throwable) { t.printStackTrace() }
@@ -1468,7 +1460,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         animateOut(binding.bgCamera, 400f, 300f); animateOut(binding.ivCamera, 400f, 300f)
         animateOut(binding.statusBarContainer, 0f, 0f); animateOut(binding.tvTicker, 0f, 0f); animateOut(binding.tvMarqueeBottom, 0f, 0f)
 
-        handler.postDelayed({ finishAndRemoveTask(); overridePendingTransition(0, 0) }, duration + 50)
+        handler.postDelayed({ exitToHomeScreen() }, duration + 50)
     }
 
     private fun animateLockscreenToPinView() {
@@ -1503,7 +1495,9 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         val valueInt = valueStr.toIntOrNull() ?: 1
         val suitLetter = when (suitCode) { 1 -> "d"; 2 -> "c"; 3 -> "h"; 4 -> "s"; else -> "s" }
         val drawableName = "$suitLetter$valueInt"
-        prefs.edit().putString("FORCED_FLOAT_CARD", drawableName).apply()
+
+        appSettings.floatTargetCardPath = drawableName
+        prefManager.saveActiveSession(appSettings)
 
         val valueEn = when (valueInt) { 1 -> "Ace"; 11 -> "Jack"; 12 -> "Queen"; 13 -> "King"; else -> valueStr }
         val valueId = when (valueInt) { 1 -> "As"; 11 -> "Jack"; 12 -> "Queen"; 13 -> "King"; else -> valueStr }
@@ -1530,6 +1524,11 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                 vibrator?.vibrate(50)
             }
         }
+    }
+
+    private fun exitToHomeScreen() {
+        finishAndRemoveTask()
+        overridePendingTransition(0, 0)
     }
 }
 
@@ -1582,4 +1581,6 @@ private fun blurBitmap(context: Context, bitmap: Bitmap, radius: Float): Bitmap 
 
         }
     }
+
+
 }

@@ -13,47 +13,37 @@
         android:layout_height="wrap_content"
         android:background="#F5F5F7"
         android:orientation="vertical"
-        android:paddingHorizontal="24dp"
-        android:paddingTop="24dp"
-        android:paddingBottom="16dp"
+        android:paddingTop="20dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <RelativeLayout
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp">
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
+
+            <ImageButton
+                android:id="@+id/btnBack"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_back_arrow"
+                app:tint="#1D1D1F" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="1dp"
-                android:fontFamily="sans-serif-black"
-                android:text="Past Tense"
+                android:layout_marginStart="16dp"
+                android:text="Advanced Settings"
                 android:textColor="#1D1D1F"
-                android:textSize="34sp"
+                android:textSize="24sp"
                 android:textStyle="bold" />
-
-            <ImageButton
-                android:id="@+id/btnHelp"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@drawable/ic_help"
-                app:tint="#A9A9AF" />
-
-        </RelativeLayout>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:fontFamily="sans-serif-medium"
-            android:text="by: Ardan Desta Vaunendra"
-            android:textColor="#1D1D1F"
-            android:textSize="13sp" />
+        </LinearLayout>
     </LinearLayout>
 
     <ScrollView
@@ -1406,10 +1396,10 @@
         app:layout_constraintStart_toStartOf="parent">
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnStart"
+            android:id="@+id/btnSaveAdvanced"
             android:layout_width="match_parent"
             android:layout_height="64dp"
-            android:text="Start Magic"
+            android:text="Save Settings"
             android:textSize="18sp"
             android:textStyle="bold"
             app:backgroundTint="#5800D1"

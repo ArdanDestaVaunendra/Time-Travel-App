@@ -30,6 +30,8 @@ class ConfigActivity : AppCompatActivity() {
     private var isUsingGalleryMode = false
     private var customImageUriString: String? = null
     private var currentFloatDelay = 0
+    private lateinit var prefManager: PreferenceManager
+    private lateinit var appSettings: AppSettings
 
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
@@ -47,6 +49,8 @@ class ConfigActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityConfigBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        prefManager = PreferenceManager(this)
+        appSettings = prefManager.getActiveSession()
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
             val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
@@ -59,8 +63,8 @@ class ConfigActivity : AppCompatActivity() {
 
         }
 
-        binding.btnHelp.setOnClickListener {
-            showSecretManualDialog()
+        binding.btnBack.setOnClickListener {
+            finish()
         }
 
         binding.tvToggleBox1.setOnClickListener { handleAccordion(1) }
@@ -177,7 +181,6 @@ class ConfigActivity : AppCompatActivity() {
         binding.btnDelayPlus.setOnClickListener { delaySeconds++; updateUIText() }
         binding.btnDelayMinus.setOnClickListener { if (delaySeconds > 0) delaySeconds--; updateUIText() }
 
-        // --- SETUP UI AR FLOAT ---
         binding.switchShakeTrigger.isChecked = prefs.getBoolean("USE_SHAKE_TRIGGER", false)
         binding.switchShakeTrigger.setOnCheckedChangeListener { _, isChecked ->
             prefs.edit().putBoolean("USE_SHAKE_TRIGGER", isChecked).apply()
@@ -242,11 +245,14 @@ class ConfigActivity : AppCompatActivity() {
 
         binding.btnPickWallpaper.setOnClickListener { pickImage.launch("image/*") }
 
-        binding.btnStart.setOnClickListener {
+        binding.btnSaveAdvanced.setOnClickListener {
             saveFloatSettings()
             saveSettings()
-            val intent = Intent(this, FakeLockActivity::class.java)
-            startActivity(intent)
+
+            appSettings.currentStatusMode = "CUSTOM"
+            prefManager.saveActiveSession(appSettings)
+
+            android.widget.Toast.makeText(this, "Advanced Settings Saved!", android.widget.Toast.LENGTH_SHORT).show()
             finish()
         }
     }
@@ -256,7 +262,6 @@ class ConfigActivity : AppCompatActivity() {
         saveFloatSettings()
     }
 
-    // --- FUNGSI LIVE PREVIEW & TEXT ---
     private fun setupLivePreview(editText: EditText, label: String) {
         editText.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
@@ -314,136 +319,148 @@ class ConfigActivity : AppCompatActivity() {
         }
     }
 
-    // --- SAVE & LOAD SETTINGS ---
     private fun loadSavedSettings() {
         binding.switchTimeTravel.setOnCheckedChangeListener(null)
 
-        val isTimeEnabled = prefs.getBoolean("ENABLE_TIME_TRAVEL", true)
-        binding.switchTimeTravel.isChecked = isTimeEnabled
+        binding.switchTimeTravel.isChecked = appSettings.activeRoutines.contains("TIMEJUMP")
+        offsetMinutes = appSettings.timeJumpOffset
+        delaySeconds = (appSettings.globalDelay / 1000).toInt()
 
-        binding.switchTimeTravel.setOnCheckedChangeListener { _, isChecked ->
-            prefs.edit().putBoolean("ENABLE_TIME_TRAVEL", isChecked).apply()
-        }
-
-        offsetMinutes = prefs.getInt("OFFSET_SEC", 0) / 60
-        delaySeconds = prefs.getInt("DELAY_MS", 5000) / 1000
-
-        binding.rbVolume.isChecked = prefs.getBoolean("TRIGGER_VOLUME", true)
-        binding.rbDoubleTap.isChecked = !binding.rbVolume.isChecked
-
-        prefs.getString("WALLPAPER_URI", null)?.let {
+        appSettings.wallpaperPath?.let {
             try { binding.imgPreview.setImageURI(Uri.parse(it)) } catch (e: Exception) {}
         }
 
-        binding.etCustomCarrier.setText(prefs.getString("CUSTOM_CARRIER", "TELKOMSEL · Emergency call only"))
-        binding.etCustomMarquee.setText(prefs.getString("CUSTOM_MARQUEE", "Ardan Desta Vaunendra - ardandestavaunedra@gmail.com"))
-
-        val showCarrier = prefs.getBoolean("SHOW_CARRIER", true)
-        val showMarquee = prefs.getBoolean("SHOW_MARQUEE", true)
-        binding.switchShowCarrier.isChecked = showCarrier
-        binding.switchShowMarquee.isChecked = showMarquee
-        binding.etCustomCarrier.visibility = if (showCarrier) View.VISIBLE else View.GONE
-        binding.etCustomMarquee.visibility = if (showMarquee) View.VISIBLE else View.GONE
-
-        val isWifiOn = prefs.getBoolean("SHOW_WIFI", true)
-        binding.switchShowWifi.isChecked = isWifiOn
-
-        binding.switchSignal1.isEnabled = !isWifiOn
-        binding.switchSignal2.isEnabled = !isWifiOn
-        binding.switchSignal1.alpha = if (isWifiOn) 0.5f else 1.0f
-        binding.switchSignal2.alpha = if (isWifiOn) 0.5f else 1.0f
-
-        binding.switch5G.isChecked = prefs.getBoolean("USE_5G", false)
-
-        binding.switchSignal1.isChecked = prefs.getBoolean("SIM1_4G", true)
-        binding.switchSignal2.isChecked = prefs.getBoolean("SIM2_4G", false)
-
-        binding.rbFormat24.isChecked = prefs.getBoolean("IS_24H", true)
-        binding.rbFormat12.isChecked = !binding.rbFormat24.isChecked
-
-        binding.rbLangEN.isChecked = (prefs.getString("DATE_LANGUAGE", "id") == "en")
+        binding.etCustomCarrier.setText(appSettings.operatorText)
+        binding.etCustomMarquee.setText(appSettings.marqueeText)
+        binding.switchShowCarrier.isChecked = appSettings.showOperator
+        binding.switchShowMarquee.isChecked = appSettings.showRunningText
+        binding.etCustomCarrier.visibility = if (appSettings.showOperator) View.VISIBLE else View.GONE
+        binding.etCustomMarquee.visibility = if (appSettings.showRunningText) View.VISIBLE else View.GONE
+        binding.rbFormat24.isChecked = appSettings.is24HourFormat
+        binding.rbFormat12.isChecked = !appSettings.is24HourFormat
+        binding.rbLangEN.isChecked = (appSettings.dateLanguage == "en")
         binding.rbLangID.isChecked = !binding.rbLangEN.isChecked
 
-        val savedSpeed = prefs.getFloat("TIME_SPEED", 1.0f)
-        val position = when (savedSpeed) { 1.35f->0; 1.2f->1; 1.0f->2; 0.85f->3; 0.7f->4; 0.45f->5; 0.2f->6; else->2 }
+        val position = when (appSettings.timeFlowSpeed) { 1.35f->0; 1.2f->1; 1.0f->2; 0.85f->3; 0.7f->4; 0.45f->5; 0.2f->6; else->2 }
         binding.spinnerTimeSpeed.setSelection(position)
 
-        val isPinEnabled = prefs.getBoolean("ENABLE_PIN", true)
-        binding.switchEnablePin.isChecked = isPinEnabled
-        binding.etCustomPin.setText(prefs.getString("CUSTOM_PIN", "123456"))
-        binding.etCustomPin.isEnabled = isPinEnabled
-        binding.etCustomPin.alpha = if (isPinEnabled) 1.0f else 0.5f
+        val stackPos = when (appSettings.stackSystem) { "Mnemonica" -> 1; "Aronson" -> 2; else -> 0 }
+        binding.spinnerStackSystem.setSelection(stackPos)
 
-        revealDurationSeconds = prefs.getInt("REVEAL_DURATION", 7)
-        binding.switchEnableReveal.isChecked = prefs.getBoolean("ENABLE_REVEAL", false)
-        binding.etRevealText.setText(prefs.getString("REVEAL_TEXT", ""))
-        revealDelaySeconds = prefs.getInt("REVEAL_DELAY", 3)
+        binding.switchEnablePin.isChecked = appSettings.isPinEnabled
+        binding.etCustomPin.isEnabled = appSettings.isPinEnabled
+        binding.etCustomPin.alpha = if (appSettings.isPinEnabled) 1.0f else 0.5f
+        binding.switchEnableReveal.isChecked = appSettings.activeRoutines.contains("PREDICTION")
+        binding.rbPredLangEN.isChecked = (appSettings.predictionLanguage == "en")
+        binding.rbPredLangID.isChecked = !binding.rbPredLangEN.isChecked
 
-        when(prefs.getString("REVEAL_TARGET", "BOTH")) {
+        when(appSettings.predictionTarget) {
             "CARRIER" -> binding.rbTargetCarrier.isChecked = true
             "MARQUEE" -> binding.rbTargetMarquee.isChecked = true
             else -> binding.rbTargetBoth.isChecked = true
         }
 
-        binding.rbPredLangEN.isChecked = (prefs.getString("PREDICTION_LANG", "id") == "en")
-        binding.rbPredLangID.isChecked = !binding.rbPredLangEN.isChecked
+        val isProfileMode = (appSettings.currentStatusMode == "PRESET") || (appSettings.currentStatusMode == "LOADED")
+
+        binding.rbVolume.isChecked = if (isProfileMode) appSettings.isVolumeTriggerForTime else prefs.getBoolean("TRIGGER_VOLUME", true)
+        binding.rbDoubleTap.isChecked = !binding.rbVolume.isChecked
+
+        if (isProfileMode) {
+            val netMode = appSettings.networkMode.uppercase()
+            val isWifi = netMode.contains("WIFI")
+            val use5g = netMode.contains("5G")
+            val sim1 = netMode.contains("SIM1") || netMode.contains("DUAL") || (!isWifi)
+            val sim2 = netMode.contains("SIM2") || netMode.contains("DUAL")
+
+            binding.switchShowWifi.isChecked = isWifi
+            binding.switch5G.isChecked = use5g
+            binding.switchSignal1.isChecked = sim1
+            binding.switchSignal2.isChecked = sim2
+
+            binding.switchSignal1.isEnabled = !isWifi
+            binding.switchSignal2.isEnabled = !isWifi
+            binding.switchSignal1.alpha = if (isWifi) 0.5f else 1.0f
+            binding.switchSignal2.alpha = if (isWifi) 0.5f else 1.0f
+
+            revealDurationSeconds = (appSettings.predictionDuration / 1000L).toInt()
+        } else {
+            val isWifiOn = prefs.getBoolean("SHOW_WIFI", true)
+            binding.switchShowWifi.isChecked = isWifiOn
+            binding.switchSignal1.isEnabled = !isWifiOn
+            binding.switchSignal2.isEnabled = !isWifiOn
+            binding.switchSignal1.alpha = if (isWifiOn) 0.5f else 1.0f
+            binding.switchSignal2.alpha = if (isWifiOn) 0.5f else 1.0f
+            binding.switch5G.isChecked = prefs.getBoolean("USE_5G", false)
+            binding.switchSignal1.isChecked = prefs.getBoolean("SIM1_4G", true)
+            binding.switchSignal2.isChecked = prefs.getBoolean("SIM2_4G", false)
+
+            revealDurationSeconds = prefs.getInt("REVEAL_DURATION", 7)
+        }
+
+        binding.etCustomPin.setText(prefs.getString("CUSTOM_PIN", "123456"))
+        binding.etRevealText.setText(prefs.getString("REVEAL_TEXT", ""))
+        revealDelaySeconds = prefs.getInt("REVEAL_DELAY", 3)
 
         updateUIText()
     }
 
     private fun saveSettings() {
+        val routines = appSettings.activeRoutines.toMutableSet()
+        if (binding.switchTimeTravel.isChecked) routines.add("TIMEJUMP") else routines.remove("TIMEJUMP")
+        if (binding.switchEnableReveal.isChecked) routines.add("PREDICTION") else routines.remove("PREDICTION")
+        appSettings.activeRoutines = routines
+
+        appSettings.timeJumpOffset = offsetMinutes
+        appSettings.globalDelay = delaySeconds * 1000L
+        appSettings.operatorText = binding.etCustomCarrier.text.toString()
+        appSettings.marqueeText = binding.etCustomMarquee.text.toString()
+        appSettings.showOperator = binding.switchShowCarrier.isChecked
+        appSettings.showRunningText = binding.switchShowMarquee.isChecked
+        appSettings.is24HourFormat = binding.rbFormat24.isChecked
+        appSettings.isPinEnabled = binding.switchEnablePin.isChecked
+        appSettings.dateLanguage = if (binding.rbLangEN.isChecked) "en" else "id"
+        appSettings.predictionLanguage = if (binding.rbPredLangEN.isChecked) "en" else "id"
+        appSettings.predictionTarget = when(binding.rgRevealTarget.checkedRadioButtonId) {
+            R.id.rbTargetCarrier -> "CARRIER"; R.id.rbTargetMarquee -> "MARQUEE"; else -> "BOTH"
+        }
+
+        appSettings.timeFlowSpeed = when (binding.spinnerTimeSpeed.selectedItemPosition) {
+            0 -> 1.35f; 1 -> 1.2f; 2 -> 1.0f; 3 -> 0.85f; 4 -> 0.7f; 5 -> 0.45f; 6 -> 0.2f; else -> 1.0f
+        }
+        appSettings.stackSystem = when(binding.spinnerStackSystem.selectedItemPosition) {
+            1 -> "Mnemonica"; 2 -> "Aronson"; else -> "Bart Harding"
+        }
+
+        appSettings.isVolumeTriggerForTime = binding.rbVolume.isChecked
+
         val editor = prefs.edit()
-        editor.putBoolean("ENABLE_TIME_TRAVEL", binding.switchTimeTravel.isChecked)
-        editor.putInt("OFFSET_SEC", offsetMinutes * 60)
-        editor.putInt("DELAY_MS", delaySeconds * 1000)
         editor.putBoolean("TRIGGER_VOLUME", binding.rbVolume.isChecked)
-        editor.putString("CUSTOM_CARRIER", binding.etCustomCarrier.text.toString())
-        editor.putString("CUSTOM_MARQUEE", binding.etCustomMarquee.text.toString())
-        editor.putBoolean("SHOW_CARRIER", binding.switchShowCarrier.isChecked)
-        editor.putBoolean("SHOW_MARQUEE", binding.switchShowMarquee.isChecked)
         editor.putBoolean("SHOW_WIFI", binding.switchShowWifi.isChecked)
         editor.putBoolean("SIM1_4G", binding.switchSignal1.isChecked)
         editor.putBoolean("SIM2_4G", binding.switchSignal2.isChecked)
         editor.putBoolean("USE_5G", binding.switch5G.isChecked)
-        editor.putBoolean("IS_24H", binding.rbFormat24.isChecked)
-        editor.putBoolean("ENABLE_PIN", binding.switchEnablePin.isChecked)
-
         val pinInput = binding.etCustomPin.text.toString()
         editor.putString("CUSTOM_PIN", if (pinInput.isNotEmpty()) pinInput else "123456")
-        editor.putString("PREDICTION_LANG", if (binding.rbPredLangEN.isChecked) "en" else "id")
         editor.putInt("REVEAL_DURATION", revealDurationSeconds)
-        editor.putBoolean("ENABLE_REVEAL", binding.switchEnableReveal.isChecked)
         editor.putString("REVEAL_TEXT", binding.etRevealText.text.toString())
         editor.putInt("REVEAL_DELAY", revealDelaySeconds)
-
-        val targetString = when(binding.rgRevealTarget.checkedRadioButtonId) {
-            R.id.rbTargetCarrier -> "CARRIER"; R.id.rbTargetMarquee -> "MARQUEE"; else -> "BOTH"
-        }
-        editor.putString("REVEAL_TARGET", targetString)
         editor.apply()
     }
 
     private fun loadFloatSettings() {
         val fPrefs = getSharedPreferences("MagicTimePrefs", MODE_PRIVATE)
 
-        binding.switchShakeTrigger.isChecked = fPrefs.getBoolean("USE_SHAKE_TRIGGER", false)
+        binding.switchFloatEffect.isChecked = appSettings.activeRoutines.contains("FLOAT")
+        binding.switchShakeTrigger.isChecked = appSettings.isShakeTriggerEnabled
+        binding.switchRedCardBack.isChecked = appSettings.useRedCardBack
+        binding.seekBarFloatSize.progress = (appSettings.objectScale * 100).toInt()
 
-        binding.switchShakeTrigger.setOnCheckedChangeListener { _, isChecked ->
-            fPrefs.edit().putBoolean("USE_SHAKE_TRIGGER", isChecked).apply()
-        }
-
-        binding.switchFloatEffect.isChecked = fPrefs.getBoolean("FLOAT_IS_ACTIVE", false)
-        binding.seekBarFloatSize.progress = fPrefs.getInt("FLOAT_SCALE", 75)
+        customImageUriString = appSettings.floatTargetCardPath
 
         currentFloatDelay = fPrefs.getInt("FLOAT_DELAY", 0)
         binding.tvFloatDelayValue.text = "${currentFloatDelay}"
-
-        binding.switchRedCardBack.isChecked = fPrefs.getBoolean("USE_RED_BACK", false)
-
         isUsingGalleryMode = fPrefs.getBoolean("IS_GALLERY_MODE", false)
         binding.switchImageSource.isChecked = isUsingGalleryMode
-
-        customImageUriString = fPrefs.getString("FLOAT_CUSTOM_URI", null)
 
         refreshPreviewImage()
         updateDynamicPreviewScale(binding.seekBarFloatSize.progress)
@@ -470,15 +487,18 @@ class ConfigActivity : AppCompatActivity() {
     }
 
     private fun saveFloatSettings() {
+        val routines = appSettings.activeRoutines.toMutableSet()
+        if (binding.switchFloatEffect.isChecked) routines.add("FLOAT") else routines.remove("FLOAT")
+        appSettings.activeRoutines = routines
+
+        appSettings.isShakeTriggerEnabled = binding.switchShakeTrigger.isChecked
+        appSettings.useRedCardBack = binding.switchRedCardBack.isChecked
+        appSettings.objectScale = binding.seekBarFloatSize.progress / 100f
+        appSettings.floatTargetCardPath = customImageUriString
+
         val editor = getSharedPreferences("MagicTimePrefs", MODE_PRIVATE).edit()
-        editor.putBoolean("FLOAT_IS_ACTIVE", binding.switchFloatEffect.isChecked)
-        editor.putInt("FLOAT_SCALE", binding.seekBarFloatSize.progress)
         editor.putInt("FLOAT_DELAY", currentFloatDelay)
-
-        editor.putBoolean("USE_RED_BACK", binding.switchRedCardBack.isChecked)
-
         editor.putBoolean("IS_GALLERY_MODE", isUsingGalleryMode)
-        editor.putString("FLOAT_CUSTOM_URI", customImageUriString)
 
         val speedMode = when (binding.rgFloatSpeed.checkedRadioButtonId) {
             R.id.rbSpeedSlow -> "SLOW"
@@ -486,7 +506,6 @@ class ConfigActivity : AppCompatActivity() {
             else -> "MEDIUM"
         }
         editor.putString("FLOAT_SPEED_MODE", speedMode)
-
         editor.remove("FLOAT_STOCK_INDEX")
         editor.apply()
     }
@@ -576,7 +595,6 @@ class ConfigActivity : AppCompatActivity() {
         binding.imgDynamicFloatPreview.requestLayout()
     }
 
-    // --- FUNGSI POP-UP PEMILIH KARTU ---
     private fun showCardSelectorDialog() {
         val scrollView = android.widget.ScrollView(this)
         val gridLayout = android.widget.GridLayout(this).apply {
