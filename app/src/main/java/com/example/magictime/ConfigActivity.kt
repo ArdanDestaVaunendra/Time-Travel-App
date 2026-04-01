@@ -17,6 +17,8 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.magictime.databinding.ActivityConfigBinding
 import com.google.android.gms.ads.MobileAds
+import kotlin.apply
+import kotlin.toString
 
 class ConfigActivity : AppCompatActivity() {
 
@@ -74,6 +76,8 @@ class ConfigActivity : AppCompatActivity() {
 
         pickImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
             uri?.let {
+                appSettings.wallpaperPath = it.toString()
+                prefManager.saveActiveSession(appSettings)
                 prefs.edit().putString("WALLPAPER_URI", it.toString()).apply()
                 try {
                     contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION)
@@ -99,6 +103,8 @@ class ConfigActivity : AppCompatActivity() {
                     0 -> 1.35f; 1 -> 1.2f; 2 -> 1.0f; 3 -> 0.85f; 4 -> 0.7f; 5 -> 0.45f; 6 -> 0.2f
                     else -> 1.0f
                 }
+                appSettings.timeFlowSpeed = selectedSpeed
+                prefManager.saveActiveSession(appSettings)
                 prefs.edit().putFloat("TIME_SPEED", selectedSpeed).apply()
             }
             override fun onNothingSelected(parent: AdapterView<*>) {}
@@ -116,6 +122,12 @@ class ConfigActivity : AppCompatActivity() {
 
         binding.spinnerStackSystem.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
+                appSettings.stackSystem = when (position) {
+                    1 -> "Mnemonica"
+                    2 -> "Aronson"
+                    else -> "Bart Harding"
+                }
+                prefManager.saveActiveSession(appSettings)
                 prefs.edit().putInt("SELECTED_STACK", position).apply()
             }
             override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
@@ -125,14 +137,16 @@ class ConfigActivity : AppCompatActivity() {
         updateUIText()
 
         binding.rgTimeFormat.setOnCheckedChangeListener { _, checkedId ->
-            prefs.edit().putBoolean("IS_24H", (checkedId == R.id.rbFormat24)).apply()
+            appSettings.is24HourFormat = (checkedId == R.id.rbFormat24)
+            prefManager.saveActiveSession(appSettings)
+            prefs.edit().putBoolean("IS_24H", appSettings.is24HourFormat).apply()
         }
 
         binding.rgDateLanguage.setOnCheckedChangeListener { _, checkedId ->
-            prefs.edit().putString("DATE_LANGUAGE", if (checkedId == R.id.rbLangEN) "en" else "id").apply()
+            appSettings.dateLanguage = if (checkedId == R.id.rbLangEN) "en" else "id"
+            prefManager.saveActiveSession(appSettings)
+            prefs.edit().putString("DATE_LANGUAGE", appSettings.dateLanguage).apply()
         }
-
-
 
         setupLivePreview(binding.etCustomCarrier, "Operator Text")
         setupLivePreview(binding.etCustomMarquee, "Running Text")
@@ -164,9 +178,6 @@ class ConfigActivity : AppCompatActivity() {
             updateDynamicPreviewScale(binding.seekBarFloatSize.progress)
         }
 
-        setupLivePreview(binding.etCustomPin, "PIN Predict")
-        setupLivePreview(binding.etRevealText, "Secret Message")
-
         setupLivePreview(binding.etRevealText, "Secret Message")
 
         binding.btnRevealDelayPlus.setOnClickListener { revealDelaySeconds++; updateUIText() }
@@ -174,15 +185,22 @@ class ConfigActivity : AppCompatActivity() {
         binding.btnRevealDurationPlus.setOnClickListener { revealDurationSeconds++; updateUIText() }
         binding.btnRevealDurationMinus.setOnClickListener { if (revealDurationSeconds > 1) revealDurationSeconds--; updateUIText() }
 
-        binding.rgTimeTrigger.setOnCheckedChangeListener { _, _ -> updateTriggerInfo() }
+        binding.rgTimeTrigger.setOnCheckedChangeListener { _, _ ->
+            updateTriggerInfo()
+            appSettings.isVolumeTriggerForTime = binding.rbVolume.isChecked
+            prefManager.saveActiveSession(appSettings)
+            prefs.edit().putBoolean("TRIGGER_VOLUME", binding.rbVolume.isChecked).apply()
+        }
 
         binding.btnOffsetPlus.setOnClickListener { offsetMinutes++; updateUIText() }
         binding.btnOffsetMinus.setOnClickListener { offsetMinutes--; updateUIText() }
         binding.btnDelayPlus.setOnClickListener { delaySeconds++; updateUIText() }
         binding.btnDelayMinus.setOnClickListener { if (delaySeconds > 0) delaySeconds--; updateUIText() }
 
-        binding.switchShakeTrigger.isChecked = prefs.getBoolean("USE_SHAKE_TRIGGER", false)
+        binding.switchShakeTrigger.isChecked = appSettings.isShakeTriggerEnabled
         binding.switchShakeTrigger.setOnCheckedChangeListener { _, isChecked ->
+            appSettings.isShakeTriggerEnabled = isChecked
+            prefManager.saveActiveSession(appSettings)
             prefs.edit().putBoolean("USE_SHAKE_TRIGGER", isChecked).apply()
         }
 
@@ -362,7 +380,7 @@ class ConfigActivity : AppCompatActivity() {
 
         val isProfileMode = (appSettings.currentStatusMode == "PRESET") || (appSettings.currentStatusMode == "LOADED")
 
-        binding.rbVolume.isChecked = if (isProfileMode) appSettings.isVolumeTriggerForTime else prefs.getBoolean("TRIGGER_VOLUME", true)
+        binding.rbVolume.isChecked = appSettings.isVolumeTriggerForTime
         binding.rbDoubleTap.isChecked = !binding.rbVolume.isChecked
 
         if (isProfileMode) {
@@ -417,6 +435,8 @@ class ConfigActivity : AppCompatActivity() {
         appSettings.showOperator = binding.switchShowCarrier.isChecked
         appSettings.showRunningText = binding.switchShowMarquee.isChecked
         appSettings.is24HourFormat = binding.rbFormat24.isChecked
+        appSettings.revealText = binding.etRevealText.text.toString()
+        appSettings.revealDelay = revealDelaySeconds
         appSettings.isPinEnabled = binding.switchEnablePin.isChecked
         appSettings.dateLanguage = if (binding.rbLangEN.isChecked) "en" else "id"
         appSettings.predictionLanguage = if (binding.rbPredLangEN.isChecked) "en" else "id"
@@ -432,6 +452,7 @@ class ConfigActivity : AppCompatActivity() {
         }
 
         appSettings.isVolumeTriggerForTime = binding.rbVolume.isChecked
+        prefManager.saveActiveSession(appSettings)
 
         val editor = prefs.edit()
         editor.putBoolean("TRIGGER_VOLUME", binding.rbVolume.isChecked)
@@ -439,6 +460,8 @@ class ConfigActivity : AppCompatActivity() {
         editor.putBoolean("SIM1_4G", binding.switchSignal1.isChecked)
         editor.putBoolean("SIM2_4G", binding.switchSignal2.isChecked)
         editor.putBoolean("USE_5G", binding.switch5G.isChecked)
+        editor.putString("CUSTOM_CARRIER", binding.etCustomCarrier.text.toString())
+        editor.putString("CUSTOM_MARQUEE", binding.etCustomMarquee.text.toString())
         val pinInput = binding.etCustomPin.text.toString()
         editor.putString("CUSTOM_PIN", if (pinInput.isNotEmpty()) pinInput else "123456")
         editor.putInt("REVEAL_DURATION", revealDurationSeconds)
@@ -457,7 +480,11 @@ class ConfigActivity : AppCompatActivity() {
 
         customImageUriString = appSettings.floatTargetCardPath
 
-        currentFloatDelay = fPrefs.getInt("FLOAT_DELAY", 0)
+        currentFloatDelay = appSettings.floatDelay
+        if (currentFloatDelay == 0) {
+            currentFloatDelay = fPrefs.getInt("FLOAT_DELAY", 0)
+        }
+
         binding.tvFloatDelayValue.text = "${currentFloatDelay}"
         isUsingGalleryMode = fPrefs.getBoolean("IS_GALLERY_MODE", false)
         binding.switchImageSource.isChecked = isUsingGalleryMode
@@ -495,6 +522,7 @@ class ConfigActivity : AppCompatActivity() {
         appSettings.useRedCardBack = binding.switchRedCardBack.isChecked
         appSettings.objectScale = binding.seekBarFloatSize.progress / 100f
         appSettings.floatTargetCardPath = customImageUriString
+        appSettings.floatDelay = currentFloatDelay
 
         val editor = getSharedPreferences("MagicTimePrefs", MODE_PRIVATE).edit()
         editor.putInt("FLOAT_DELAY", currentFloatDelay)

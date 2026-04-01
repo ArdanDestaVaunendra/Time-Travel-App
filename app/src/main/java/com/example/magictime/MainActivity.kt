@@ -3,11 +3,13 @@ package com.example.magictime
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
+import android.os.Build
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.magictime.databinding.ActivityMainBinding
+import kotlin.text.compareTo
 
 class MainActivity : AppCompatActivity() {
 
@@ -28,9 +30,25 @@ class MainActivity : AppCompatActivity() {
         binding.btnStartMagic.setOnClickListener {
             killAllToasts()
 
-            val intent = Intent(this, FakeLockActivity::class.java)
+            val intent = Intent(this, FakeLockActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+                addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+            }
             startActivity(intent)
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, 0, 0)
+            } else {
+                @Suppress("DEPRECATION")
+                overridePendingTransition(0, 0)
+            }
+
+            finish()
         }
+
+
     }
 
     override fun onResume() {

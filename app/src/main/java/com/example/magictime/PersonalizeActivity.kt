@@ -14,6 +14,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.magictime.databinding.ActivityPersonalizeBinding
+import kotlin.apply
+import kotlin.toString
 
 class PersonalizeActivity : AppCompatActivity() {
 
@@ -108,7 +110,11 @@ class PersonalizeActivity : AppCompatActivity() {
         currentSettings.marqueeText = binding.etCustomMarquee.text.toString()
 
         val pinInput = binding.etCustomPin.text.toString()
-        prefs.edit().putString("CUSTOM_PIN", if (pinInput.isNotEmpty()) pinInput else "123456").apply()
+        prefs.edit()
+            .putString("CUSTOM_PIN", if (pinInput.isNotEmpty()) pinInput else "123456")
+            .putString("CUSTOM_CARRIER", currentSettings.operatorText)
+            .putString("CUSTOM_MARQUEE", currentSettings.marqueeText)
+            .apply()
 
         prefManager.saveActiveSession(currentSettings)
     }
@@ -149,4 +155,5 @@ class PersonalizeActivity : AppCompatActivity() {
             }
         }
     }
+
 }

@@ -13,7 +13,6 @@
         android:layout_height="wrap_content"
         android:background="#F5F5F7"
         android:orientation="vertical"
-        android:paddingTop="20dp"
         android:paddingLeft="10dp"
         android:paddingRight="10dp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -33,7 +32,7 @@
                 android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_back_arrow"
-                app:tint="#1D1D1F" />
+                app:tint="#5800D1" />
 
             <TextView
                 android:layout_width="wrap_content"

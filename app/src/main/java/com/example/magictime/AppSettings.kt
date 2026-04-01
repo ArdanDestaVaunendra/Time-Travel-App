@@ -8,6 +8,7 @@ data class AppSettings(
     var dateLanguage: String = "en",
 
     var floatDisplayDuration: Long = 10000L,
+    var floatDelay: Int = 0,
     var isShakeTriggerEnabled: Boolean = false,
     var useRedCardBack: Boolean = false,
     var objectScale: Float = 0.91f,
@@ -17,6 +18,9 @@ data class AppSettings(
     var predictionTarget: String = "BOTH",
     var predictionDuration: Long = 10000L,
     var predictionLanguage: String = "en",
+    var revealText: String = "",
+    var revealDelay: Int = 3,
+
 
     var showOperator: Boolean = true,
     var showRunningText: Boolean = true,
@@ -25,7 +29,7 @@ data class AppSettings(
     var networkMode: String = "SIM1_5G_ON",
     var wallpaperPath: String? = null,
     var isPinEnabled: Boolean = true,
-    var isVolumeTriggerForTime: Boolean = false,
+    var isVolumeTriggerForTime: Boolean = true,
 
     var activeRoutines: Set<String> = emptySet(),
     var currentStatusMode: String = "PRESET"

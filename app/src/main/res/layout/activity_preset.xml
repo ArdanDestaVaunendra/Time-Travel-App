@@ -22,13 +22,13 @@
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_back_arrow"
-            app:tint="#1D1D1F" />
+            app:tint="#5800D1" />
 
         <TextView
-            android:layout_width="0dp"
+            android:layout_width="170dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:layout_marginStart="16dp"
+            android:layout_weight="1"
             android:text="Preset Routine"
             android:textColor="#1D1D1F"
             android:textSize="24sp"
@@ -36,11 +36,11 @@
 
         <ImageButton
             android:id="@+id/btnPresetInfo"
-            android:layout_width="40dp"
+            android:layout_width="60dp"
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_help"
-            app:tint="#525252" />
+            android:src="@drawable/ic_help"
+            app:tint="#5800D1" />
     </LinearLayout>
 
     <ScrollView

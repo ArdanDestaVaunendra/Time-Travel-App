@@ -54,11 +54,12 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.abs
 import kotlinx.coroutines.withContext
+import androidx.core.view.ViewCompat
 
 @Suppress("DEPRECATION")
 class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
-    private var isVolumeTriggerForTime = true
+    private var isVolumeTriggerForTime = false
     private lateinit var binding: ActivityFakeLockBinding
     private val prefs by lazy { getSharedPreferences("MagicPrefs", Context.MODE_PRIVATE) }
     private val handler = Handler(Looper.getMainLooper())
@@ -175,6 +176,17 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         try {
             binding = ActivityFakeLockBinding.inflate(layoutInflater)
             setContentView(binding.root)
+
+            ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+                val barsVisible = insets.isVisible(WindowInsetsCompat.Type.systemBars())
+                if (barsVisible) {
+                    handler.post {
+                        try { enforceImmersiveMode() } catch (_: Exception) {}
+                    }
+                }
+                insets
+            }
+
             prefManager = PreferenceManager(this)
             appSettings = prefManager.getActiveSession()
         } catch (e: Exception) {
@@ -185,15 +197,14 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         binding.tvTicker.isSelected = true
         binding.tvMarqueeBottom.isSelected = true
 
-        try { hideSystemUI() } catch (e: Exception) {}
+        try { enforceImmersiveMode() } catch (_: Exception) {}
 
         screenHeight = resources.displayMetrics.heightPixels
         screenWidth = resources.displayMetrics.widthPixels
 
         loadSettings()
 
-        val isProfileMode = (appSettings.currentStatusMode == "PRESET") || (appSettings.currentStatusMode == "LOADED")
-        isPinEnabled = if (isProfileMode) appSettings.isPinEnabled else prefs.getBoolean("ENABLE_PIN", true)
+        isPinEnabled = appSettings.isPinEnabled
         correctPin = prefs.getString("CUSTOM_PIN", "123456") ?: "123456"
 
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
@@ -205,6 +216,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         setupShortcuts()
         setupPinScreenInteractions()
         loadFloatConfigs()
+
     }
 
     override fun onResume() {
@@ -222,7 +234,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         loadFloatConfigs()
 
         loadWallpaper()
-        try { hideSystemUI() } catch (e: Exception) {}
+        try { enforceImmersiveMode() } catch (_: Exception) {}
 
         sensorManager.unregisterListener(this)
 
@@ -230,6 +242,13 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             accelerometer?.let {
                 sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME)
             }
+        }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            enforceImmersiveMode()
         }
     }
 
@@ -321,10 +340,23 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             prefs.getInt("REVEAL_DURATION", 7) * 1000L
         }
 
-        revealText = prefs.getString("REVEAL_TEXT", "") ?: ""
-        revealDelay = prefs.getInt("REVEAL_DELAY", 3)
+        revealText = if (isProfileMode) {
+            appSettings.revealText
+        } else {
+            prefs.getString("REVEAL_TEXT", "") ?: ""
+        }
 
-        isVolumeTriggerForTime = if (isProfileMode) appSettings.isVolumeTriggerForTime else prefs.getBoolean("TRIGGER_VOLUME", true)
+        revealDelay = if (isProfileMode) {
+            appSettings.revealDelay
+        } else {
+            prefs.getInt("REVEAL_DELAY", 3)
+        }
+
+        isVolumeTriggerForTime = if (isProfileMode) {
+            appSettings.isVolumeTriggerForTime
+        } else {
+            prefs.getBoolean("TRIGGER_VOLUME", true)
+        }
     }
 
     private fun loadWallpaper() {
@@ -501,6 +533,9 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
+                    val topGuardPx = 32f * resources.displayMetrics.density
+                    if (event.rawY <= topGuardPx) return@setOnTouchListener true
+
                     touchStartX = event.rawX
                     touchStartY = event.rawY
                     isSwipingForUnlock = true
@@ -725,7 +760,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                     2 -> {
                         val inputStr = currentPinInput
                         val inputInt = inputStr.toIntOrNull() ?: 0
-                        val isPresetMode = (appSettings.currentStatusMode == "PRESET")
+                        val isPresetMode = (appSettings.currentStatusMode == "PRESET") || (appSettings.currentStatusMode == "LOADED")
                         val selectedStack = if (isPresetMode) {
                             when (appSettings.stackSystem.uppercase()) {
                                 "MNEMONICA" -> 1
@@ -1042,13 +1077,16 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             .setInterpolator(shrinkInterpolator)
             .start()
 
-        val lockscreenViews = listOf(
+        val scaleRestoreViews = listOf(
             binding.tvBigClock, binding.tvDate, binding.ivLock,
-            binding.bgPhone, binding.ivPhone, binding.bgCamera, binding.ivCamera,
+            binding.bgPhone, binding.ivPhone, binding.bgCamera, binding.ivCamera
+        )
+
+        val fadeRestoreViews = listOf(
             binding.statusBarContainer, binding.tvTicker, binding.tvMarqueeBottom
         )
 
-        lockscreenViews.forEach {
+        scaleRestoreViews.forEach {
             it.visibility = View.VISIBLE
             it.animate()
                 .scaleX(1f)
@@ -1060,6 +1098,21 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                 .setInterpolator(DecelerateInterpolator())
                 .start()
         }
+
+        fadeRestoreViews.forEach {
+            it.visibility = View.VISIBLE
+            it.scaleX = 1f
+            it.scaleY = 1f
+            it.translationX = 0f
+            it.translationY = 0f
+            it.alpha = 0f
+            it.animate()
+                .alpha(1f)
+                .setDuration(250L)
+                .setInterpolator(DecelerateInterpolator())
+                .start()
+        }
+
 
         binding.pinScreenContainer.animate()
             .alpha(0f)
@@ -1180,11 +1233,21 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         if (!isRevealed) return
 
         v.animate().alpha(0f).setDuration(150).withEndAction {
-            val isProfileMode = (appSettings.currentStatusMode == "PRESET") || (appSettings.currentStatusMode == "LOADED")
+
             val originalText = if (v.id == binding.tvTicker.id) {
-                if (isProfileMode) appSettings.operatorText else prefs.getString("CUSTOM_CARRIER", "TELKOMSEL") ?: "TELKOMSEL"
+                val fromSettings = appSettings.operatorText
+                if (fromSettings.isNotBlank()) {
+                    fromSettings
+                } else {
+                    prefs.getString("CUSTOM_CARRIER", "TELKOMSEL") ?: "TELKOMSEL"
+                }
             } else {
-                if (isProfileMode) appSettings.marqueeText else prefs.getString("CUSTOM_MARQUEE", "Running Text") ?: "Running Text"
+                val fromSettings = appSettings.marqueeText
+                if (fromSettings.isNotBlank()) {
+                    fromSettings
+                } else {
+                    prefs.getString("CUSTOM_MARQUEE", "Running Text") ?: "Running Text"
+                }
             }
 
             v.text = originalText
@@ -1196,6 +1259,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             cancelReveal = false
         }.start()
     }
+
 
     private fun finishPinUnlockWithAnimation() {
         val duration = 300L
@@ -1250,13 +1314,14 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         floatScale = (appSettings.objectScale * 100).toInt()
         val isProfileMode = (appSettings.currentStatusMode == "PRESET") || (appSettings.currentStatusMode == "LOADED")
 
-        if (isProfileMode) {
-            useShakeTrigger = false
+        val isPresetMode = appSettings.currentStatusMode == "PRESET"
+        useShakeTrigger = if (isPresetMode) {
+            false
         } else {
-            useShakeTrigger = appSettings.isShakeTriggerEnabled
+            appSettings.isShakeTriggerEnabled
         }
 
-        floatDelay = fPrefs.getInt("FLOAT_DELAY", 0)
+        floatDelay = if (isProfileMode) appSettings.floatDelay else fPrefs.getInt("FLOAT_DELAY", 0)
 
         var isImageSet = false
         floatUri = appSettings.floatTargetCardPath
@@ -1477,17 +1542,29 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                 .start()
         }
 
-        val viewsToHide = listOf(
+        fun fadeOutOnly(v: View) {
+            v.animate()
+                .alpha(0f)
+                .setDuration(duration)
+                .setInterpolator(interpolator)
+                .start()
+        }
+
+        val expandViews = listOf(
             binding.tvBigClock, binding.tvDate, binding.ivLock,
-            binding.bgPhone, binding.ivPhone, binding.bgCamera, binding.ivCamera,
+            binding.bgPhone, binding.ivPhone, binding.bgCamera, binding.ivCamera
+        )
+
+        val fadeOnlyViews = listOf(
             binding.statusBarContainer, binding.tvTicker, binding.tvMarqueeBottom
         )
 
-        viewsToHide.forEach { expandAndFade(it) }
+        expandViews.forEach { expandAndFade(it) }
+        fadeOnlyViews.forEach { fadeOutOnly(it) }
 
         handler.postDelayed({
             performUnlock()
-            viewsToHide.forEach { it.visibility = View.INVISIBLE }
+            (expandViews + fadeOnlyViews).forEach { it.visibility = View.INVISIBLE }
         }, duration)
     }
 
@@ -1526,10 +1603,49 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         }
     }
 
-    private fun exitToHomeScreen() {
-        finishAndRemoveTask()
-        overridePendingTransition(0, 0)
+    private fun suppressTransition(isClose: Boolean) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            overrideActivityTransition(
+                if (isClose) OVERRIDE_TRANSITION_CLOSE else OVERRIDE_TRANSITION_OPEN,
+                0,
+                0
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            overridePendingTransition(0, 0)
+        }
     }
+
+    private fun exitToHomeScreen() {
+        val homeIntent = Intent(Intent.ACTION_MAIN).apply {
+            addCategory(Intent.CATEGORY_HOME)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+        }
+
+        suppressTransition(isClose = true)
+
+        try {
+            startActivity(homeIntent)
+            suppressTransition(isClose = false)
+        } catch (_: Exception) {
+        }
+
+        moveTaskToBack(true)
+        finishAffinity()
+        finishAndRemoveTask()
+        finish()
+    }
+
+    private fun enforceImmersiveMode() {
+        val retryDelays = longArrayOf(0L, 50L, 150L, 300L)
+        retryDelays.forEach { d ->
+            handler.postDelayed({
+                try { hideSystemUI() } catch (_: Exception) {}
+            }, d)
+        }
+    }
+
 }
 
 private fun blurBitmap(context: Context, bitmap: Bitmap, radius: Float): Bitmap {
