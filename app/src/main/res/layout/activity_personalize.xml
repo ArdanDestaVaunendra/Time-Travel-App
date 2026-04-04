@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:paddingTop="30dp"
+        android:paddingBottom="20dp"
         android:paddingLeft="10dp"
         android:paddingRight="10dp"
         android:gravity="center_vertical">
@@ -24,13 +24,22 @@
             app:tint="#5800D1" />
 
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
+            android:layout_weight="1"
             android:text="Personalize"
             android:textColor="#1D1D1F"
             android:textSize="24sp"
             android:textStyle="bold" />
+
+        <ImageButton
+            android:id="@+id/btnPersonalizeInfo"
+            android:layout_width="60dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_help"
+            app:tint="#5800D1" />
     </LinearLayout>
 
     <ScrollView
@@ -107,17 +116,27 @@
                         android:id="@+id/switchEnablePin"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
                         android:text="Require PIN"
                         android:textColor="#1D1D1F"
                         android:textStyle="bold"
                         app:thumbTint="@color/switch_thumb_color"
                         app:trackTint="@color/switch_track_color" />
 
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="Set 6-digit PIN to unlock the fake lockscreen."
+                        android:textColor="#86868B"
+                        android:textSize="12sp" />
+
                     <EditText
                         android:id="@+id/etCustomPin"
                         android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:layout_marginTop="8dp"
+                        android:layout_height="50dp"
+                        android:layout_marginBottom="12dp"
                         android:background="#F5F5F7"
                         android:hint="Set 6-Digit PIN"
                         android:inputType="numberPassword"
@@ -125,6 +144,7 @@
                         android:maxLines="1"
                         android:imeOptions="actionDone"
                         android:paddingHorizontal="16dp"
+                        android:textColor="#575757"
                         android:textSize="14sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -168,9 +188,9 @@
                         android:layout_height="48dp"
                         android:background="#F5F5F7"
                         android:hint="Operator (e.g. TELKOMSEL)"
-                        android:inputType="text"
-                        android:maxLines="1"
-                        android:imeOptions="actionDone"
+                        android:imeOptions="flagNoEnterAction"
+                        android:inputType="textCapSentences|textMultiLine"
+                        android:maxLines="2"
                         android:paddingHorizontal="16dp"
                         android:textSize="14sp" />
 
@@ -191,9 +211,9 @@
                         android:layout_height="48dp"
                         android:background="#F5F5F7"
                         android:hint="Running Text (Bottom)"
-                        android:inputType="text"
-                        android:maxLines="1"
-                        android:imeOptions="actionDone"
+                        android:imeOptions="flagNoEnterAction"
+                        android:inputType="textCapSentences|textMultiLine"
+                        android:maxLines="2"
                         android:paddingHorizontal="16dp"
                         android:textSize="14sp" />
                 </LinearLayout>
@@ -210,15 +230,15 @@
         </LinearLayout>
     </ScrollView>
 
-    <androidx.cardview.widget.CardView
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardTypingPreview"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="20dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="12dp"
         android:visibility="gone"
-        app:cardBackgroundColor="#222222"
-        app:cardCornerRadius="12dp"
+        app:cardBackgroundColor="#5800D1"
+        app:cardCornerRadius="16dp"
         app:cardElevation="8dp">
 
         <LinearLayout
@@ -231,20 +251,37 @@
                 android:id="@+id/tvPreviewLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Editing: Label"
-                android:textColor="#AAAAAA"
-                android:textSize="12sp" />
+                android:text="Preview:"
+                android:textColor="#D8C7FF"
+                android:textSize="12sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/tvPreviewContent"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Preview Text"
+                android:layout_marginTop="6dp"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="2"
+                android:text="..."
                 android:textColor="#FFFFFF"
-                android:textSize="18sp"
+                android:textSize="16sp"
                 android:textStyle="bold" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnPersonalizePreviewDone"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_gravity="end"
+                android:layout_marginTop="10dp"
+                android:text="Done"
+                android:textAllCaps="false"
+                android:textColor="#5800D1"
+                app:backgroundTint="#F5F5F7"
+                app:cornerRadius="10dp"
+                app:elevation="0dp" />
         </LinearLayout>
-    </androidx.cardview.widget.CardView>
+    </com.google.android.material.card.MaterialCardView>
 
 </LinearLayout>

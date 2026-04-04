@@ -25,13 +25,22 @@
             app:tint="#5800D1" />
 
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
+            android:layout_weight="1"
             android:text="Profile Slots"
             android:textColor="#1D1D1F"
             android:textSize="24sp"
             android:textStyle="bold" />
+
+        <ImageButton
+            android:id="@+id/btnLoadSettingInfo"
+            android:layout_width="60dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_help"
+            app:tint="#5800D1" />
     </LinearLayout>
 
     <ScrollView

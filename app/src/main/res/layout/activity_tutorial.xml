@@ -137,7 +137,7 @@
                         android:layout_height="32dp"
                         android:background="#F5F5F7"
                         android:padding="8dp"
-                        android:src="@android:drawable/ic_media_play"
+                        android:src="@drawable/ic_media_play"
                         app:tint="#5800D1" />
                     <TextView
                         android:layout_width="0dp"
@@ -172,7 +172,7 @@
                         android:layout_height="32dp"
                         android:background="#F5F5F7"
                         android:padding="8dp"
-                        android:src="@android:drawable/ic_media_play"
+                        android:src="@drawable/ic_media_play"
                         app:tint="#5800D1" />
                     <TextView
                         android:layout_width="0dp"

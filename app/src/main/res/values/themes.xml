@@ -6,6 +6,8 @@
         <item name="colorSecondary">#03DAC5</item>
         <item name="colorSecondaryVariant">#018786</item>
         <item name="colorOnSecondary">@color/black</item>
+        <item name="colorControlActivated">#5800D1</item>
+        <item name="colorAccent">#5800D1</item>
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
     </style>
 

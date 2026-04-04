@@ -45,7 +45,8 @@
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:paddingHorizontal="20dp"
         android:clipToPadding="false"
         android:paddingBottom="40dp">
@@ -117,7 +118,33 @@
                         android:textColor="#86868B"
                         android:layout_marginBottom="12dp"/>
 
-                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F0F0F0" android:layout_marginBottom="12dp"/>
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilPresetRevealText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:hint="Custom Reveal Text (e.g., Your card is...)"
+                        app:boxBackgroundColor="#F5F5F7"
+                        app:boxBackgroundMode="filled"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxStrokeWidth="0dp"
+                        app:boxStrokeWidthFocused="0dp">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etPresetRevealText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:imeOptions="actionDone"
+                            android:inputType="textCapSentences|textMultiLine"
+                            android:maxLines="2"
+                            android:minHeight="50dp"
+                            android:paddingHorizontal="16dp"
+                            android:textColor="#575757"
+                            android:textSize="14sp" />
+                    </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.switchmaterial.SwitchMaterial
                         android:id="@+id/switchARFloat"
@@ -203,4 +230,58 @@
 
         </LinearLayout>
     </ScrollView>
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardPresetTypingPreview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginBottom="12dp"
+        android:visibility="gone"
+        app:cardBackgroundColor="#5800D1"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="8dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/tvPresetPreviewLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Preview:"
+                android:textColor="#D8C7FF"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvPresetPreviewContent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="2"
+                android:text="..."
+                android:textColor="#FFFFFF"
+                android:textSize="16sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnPresetRevealDone"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_gravity="end"
+                android:layout_marginTop="10dp"
+                android:text="Done"
+                android:textAllCaps="false"
+                android:textColor="#5800D1"
+                app:backgroundTint="#F5F5F7"
+                app:cornerRadius="10dp"
+                app:elevation="0dp" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
 </LinearLayout>

@@ -18,7 +18,7 @@ data class AppSettings(
     var predictionTarget: String = "BOTH",
     var predictionDuration: Long = 10000L,
     var predictionLanguage: String = "en",
-    var revealText: String = "",
+    var revealText: String = Defaults.REVEAL_TEXT,
     var revealDelay: Int = 3,
 
 

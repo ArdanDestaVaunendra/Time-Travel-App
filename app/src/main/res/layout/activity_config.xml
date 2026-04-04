@@ -35,13 +35,22 @@
                 app:tint="#5800D1" />
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
+                android:layout_weight="1"
                 android:text="Advanced Settings"
                 android:textColor="#1D1D1F"
                 android:textSize="24sp"
                 android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/btnConfigInfo"
+                android:layout_width="60dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_help"
+                app:tint="#5800D1" />
         </LinearLayout>
     </LinearLayout>
 
@@ -51,7 +60,7 @@
         android:layout_height="0dp"
         android:clipToPadding="false"
         android:fillViewport="true"
-        app:layout_constraintBottom_toTopOf="@id/bottomBar"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/topHeaderBar">
@@ -389,7 +398,7 @@
                         android:id="@+id/switchEnablePin"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="4dp"
+                        android:layout_marginBottom="8dp"
                         android:checked="true"
                         android:text="Require PIN to Unlock"
                         android:textColor="#1D1D1F"
@@ -398,15 +407,26 @@
                         app:thumbTint="@color/switch_thumb_color"
                         app:trackTint="@color/switch_track_color" />
 
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="Require PIN before unlock animation completes."
+                        android:textColor="#86868B"
+                        android:textSize="12sp" />
+
                     <EditText
                         android:id="@+id/etCustomPin"
                         android:layout_width="match_parent"
                         android:layout_height="50dp"
+                        android:layout_marginBottom="12dp"
                         android:background="#F5F5F7"
                         android:hint="Set 6-Digit PIN (e.g. 123456)"
                         android:imeOptions="actionDone"
                         android:inputType="numberPassword"
                         android:maxLength="6"
+                        android:maxLines="1"
                         android:paddingHorizontal="16dp"
                         android:textColor="#575757"
                         android:textSize="14sp" />
@@ -506,12 +526,22 @@
                             android:id="@+id/switchEnableReveal"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
                             android:text="Enable Secret Message"
                             android:textColor="#1D1D1F"
                             android:textSize="14sp"
                             android:textStyle="bold"
                             app:thumbTint="@color/switch_thumb_color"
                             app:trackTint="@color/switch_track_color" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:layout_marginBottom="8dp"
+                            android:text="Reveal custom prediction text on trigger."
+                            android:textColor="#86868B"
+                            android:textSize="12sp" />
 
                         <TextView
                             android:id="@+id/tvTriggerInfo"
@@ -532,8 +562,9 @@
                             android:layout_marginBottom="16dp"
                             android:background="#F5F5F7"
                             android:hint="The secret message to reveal..."
-                            android:imeOptions="actionDone"
-                            android:inputType="text"
+                            android:imeOptions="flagNoEnterAction"
+                            android:inputType="textCapSentences|textMultiLine"
+                            android:maxLines="2"
                             android:paddingHorizontal="16dp"
                             android:textColor="#575757"
                             android:textSize="14sp" />
@@ -1325,12 +1356,21 @@
                             android:layout_height="wrap_content"
                             android:layout_marginBottom="8dp"
                             android:checked="true"
-                            android:text="SHOW OPERATOR TEXT"
+                            android:text="Show Operator Text"
                             android:textColor="#1D1D1F"
-                            android:textSize="12sp"
+                            android:textSize="14sp"
                             android:textStyle="bold"
                             app:thumbTint="@color/switch_thumb_color"
                             app:trackTint="@color/switch_track_color" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:layout_marginBottom="8dp"
+                            android:text="Display carrier label on fake lockscreen."
+                            android:textColor="#86868B"
+                            android:textSize="12sp" />
 
                         <EditText
                             android:id="@+id/etCustomCarrier"
@@ -1339,9 +1379,9 @@
                             android:layout_marginBottom="16dp"
                             android:background="#F5F5F7"
                             android:hint="Operator (e.g. TELKOMSEL)"
-                            android:imeOptions="actionDone"
-                            android:inputType="textCapCharacters"
-                            android:maxLines="1"
+                            android:imeOptions="flagNoEnterAction"
+                            android:inputType="textCapSentences|textMultiLine"
+                            android:maxLines="2"
                             android:paddingHorizontal="16dp"
                             android:textColor="#575757"
                             android:textSize="14sp" />
@@ -1352,12 +1392,21 @@
                             android:layout_height="wrap_content"
                             android:layout_marginBottom="8dp"
                             android:checked="true"
-                            android:text="SHOW RUNNING TEXT"
+                            android:text="Show Running Text"
                             android:textColor="#1D1D1F"
-                            android:textSize="12sp"
+                            android:textSize="14sp"
                             android:textStyle="bold"
                             app:thumbTint="@color/switch_thumb_color"
                             app:trackTint="@color/switch_track_color" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:layout_marginBottom="8dp"
+                            android:text="Display running text at the bottom."
+                            android:textColor="#86868B"
+                            android:textSize="12sp" />
 
                         <EditText
                             android:id="@+id/etCustomMarquee"
@@ -1365,9 +1414,9 @@
                             android:layout_height="50dp"
                             android:background="#F5F5F7"
                             android:hint="Running Text (Bottom)"
-                            android:imeOptions="actionDone"
-                            android:inputType="text"
-                            android:maxLines="1"
+                            android:imeOptions="flagNoEnterAction"
+                            android:inputType="textCapSentences|textMultiLine"
+                            android:maxLines="2"
                             android:paddingHorizontal="16dp"
                             android:textColor="#575757"
                             android:textSize="14sp" />
@@ -1375,43 +1424,30 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <View
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSaveAdvanced"
                 android:layout_width="match_parent"
-                android:layout_height="100dp" />
+                android:layout_height="56dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="24dp"
+                android:text="Save Settings"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:backgroundTint="#5800D1"
+                app:cornerRadius="12dp" />
 
         </LinearLayout>
     </ScrollView>
-
-    <LinearLayout
-        android:id="@+id/bottomBar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#F5F5F7"
-        android:paddingHorizontal="24dp"
-        android:paddingTop="40dp"
-        android:paddingBottom="50dp"
-        app:layout_constraintBottom_toTopOf="@id/cardTypingPreview"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnSaveAdvanced"
-            android:layout_width="match_parent"
-            android:layout_height="64dp"
-            android:text="Save Settings"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            app:backgroundTint="#5800D1"
-            app:cornerRadius="32dp" />
-    </LinearLayout>
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardTypingPreview"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:visibility="gone"
-        app:cardBackgroundColor="#1D1D1F"
-        app:cardCornerRadius="0dp"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginBottom="12dp"
+        app:cardBackgroundColor="#5800D1"
+        app:cardCornerRadius="16dp"
         app:cardElevation="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -1428,7 +1464,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Preview:"
-                android:textColor="#86868B"
+                android:textColor="#D8C7FF"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
@@ -1436,13 +1472,27 @@
                 android:id="@+id/tvPreviewContent"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="6dp"
                 android:ellipsize="end"
                 android:fontFamily="sans-serif-medium"
                 android:maxLines="2"
                 android:text="..."
                 android:textColor="#FFFFFF"
-                android:textSize="16sp" />
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnConfigPreviewDone"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_gravity="end"
+                android:layout_marginTop="10dp"
+                android:text="Done"
+                android:textAllCaps="false"
+                android:textColor="#5800D1"
+                app:backgroundTint="#F5F5F7"
+                app:cornerRadius="10dp"
+                app:elevation="0dp" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 

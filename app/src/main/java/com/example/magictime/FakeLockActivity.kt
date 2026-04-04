@@ -89,7 +89,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     // === VARIABEL PIN & PREDICTION ===
     private var isPinEnabled = true
     private var secretMode = 0
-    private var correctPin = "123456"
+    private var correctPin = Defaults.PIN
     private var currentPinInput = ""
     private val maxPinLength = 6
     private var isSecretSetupMode = false
@@ -205,8 +205,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         loadSettings()
 
         isPinEnabled = appSettings.isPinEnabled
-        correctPin = prefs.getString("CUSTOM_PIN", "123456") ?: "123456"
-
+        correctPin = prefs.getString("CUSTOM_PIN", Defaults.PIN) ?: Defaults.PIN
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
 
@@ -340,10 +339,11 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             prefs.getInt("REVEAL_DURATION", 7) * 1000L
         }
 
+        val defaultReveal = Defaults.REVEAL_TEXT
         revealText = if (isProfileMode) {
-            appSettings.revealText
+            appSettings.revealText.ifBlank { defaultReveal }
         } else {
-            prefs.getString("REVEAL_TEXT", "") ?: ""
+            (prefs.getString("REVEAL_TEXT", defaultReveal) ?: defaultReveal).ifBlank { defaultReveal }
         }
 
         revealDelay = if (isProfileMode) {
@@ -877,7 +877,12 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
                         if (isPredictionValid && secretMode != 4) {
                             vibratePattern(isDouble = true)
-                            val baseCustomText = prefs.getString("REVEAL_TEXT", "") ?: ""
+                            val isProfileMode = (appSettings.currentStatusMode == "PRESET") || (appSettings.currentStatusMode == "LOADED")
+                            val baseCustomText = if (isProfileMode) {
+                                appSettings.revealText
+                            } else {
+                                prefs.getString("REVEAL_TEXT", "") ?: ""
+                            }
                             revealText = if (baseCustomText.isNotEmpty()) {
                                 "$baseCustomText $forceCardPrediction"
                             } else {

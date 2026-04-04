@@ -9,7 +9,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.magictime.databinding.ActivityMainBinding
-import kotlin.text.compareTo
 
 class MainActivity : AppCompatActivity() {
 
@@ -134,10 +133,10 @@ class MainActivity : AppCompatActivity() {
                 imgIcon.setColorFilter(Color.parseColor("#2196F3"))
             }
             "CUSTOM" -> {
-                cardBanner.setCardBackgroundColor(Color.parseColor("#FFF3E0"))
-                tvStatus.setTextColor(Color.parseColor("#E65100"))
+                cardBanner.setCardBackgroundColor(Color.parseColor("#F1EEFF"))
+                tvStatus.setTextColor(Color.parseColor("#3B3E9C"))
                 tvStatus.text = "Mode: Custom / Modified"
-                imgIcon.setColorFilter(Color.parseColor("#FF9800"))
+                imgIcon.setColorFilter(Color.parseColor("#3B3E9C"))
             }
             else -> {
                 tvStatus.text = "Ready to Perform"
