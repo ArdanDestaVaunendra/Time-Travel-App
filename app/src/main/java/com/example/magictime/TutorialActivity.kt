@@ -122,7 +122,7 @@ class TutorialActivity : AppCompatActivity() {
 
         <font color="#5800D1"><b><u>[6] PRO PERFORMANCE TIPS</u></b></font><br>
         &#8226; <b>Biometrics:</b> Use Fingerprint/FaceID to bypass the real lockscreen directly into this app.<br>
-        &#8226; <b>DND Mode:</b> Always activate 'Do Not Disturb' to prevent real notifications from breaking the Art.<br>
+        &#8226; <b>In-App DND Mode:</b> Activate 'Do Not Disturb' directly from the main menu to safely block incoming notifications from breaking the Art.<br>
         &#8226; <b>Misdirection:</b> Treat the phone casually. Practice PIN inputs blindly to maintain eye contact.<br>
         &#8226; <b>Vanishing:</b> Overlapping the AR object with the screen edge triggers an instant vanish animation.<br><br>
 

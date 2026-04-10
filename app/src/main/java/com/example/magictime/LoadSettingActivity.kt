@@ -222,7 +222,11 @@ class LoadSettingActivity : AppCompatActivity() {
 
         val activePinHtml = android.text.TextUtils.htmlEncode(activePin)
         val revealTextHtml = android.text.TextUtils.htmlEncode(s.revealText.ifBlank { Defaults.REVEAL_TEXT })
-
+        val netMode = s.networkMode.uppercase()
+        val isWifi = netMode.contains("WIFI")
+        val use5g = netMode.contains("5G")
+        val sim1 = netMode.contains("SIM1") || netMode.contains("DUAL") || (!isWifi)
+        val sim2 = netMode.contains("SIM2") || netMode.contains("DUAL")
 
         val msgHtml = """
             <center>
@@ -261,7 +265,16 @@ class LoadSettingActivity : AppCompatActivity() {
             &#8226; <i>Operator Text:</i> <b><font color="#007BFF">${s.operatorText}</font></b><br>
             &#8226; <i>Marquee Visible:</i> ${if (s.showRunningText) "<b><font color=\"#2E7D32\">YES</font></b>" else "<b><font color=\"#D12012\">NO</font></b>"}<br>
             &#8226; <i>Marquee Text:</i> <b><font color="#007BFF">${s.marqueeText}</font></b><br><br>
-        
+            
+            <font color="#CCCCCC">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</font><br><br>
+            
+            <font color="#5800D1"><b><u>NETWORK STATUS</u></b></font><br>
+            &#8226; <i>Wi-Fi:</i> ${if (isWifi) "<b><font color=\"#2E7D32\">ON</font></b>" else "<b><font color=\"#D12012\">OFF</font></b>"}<br>
+            &#8226; <i>5G Icon:</i> ${if (use5g) "<b><font color=\"#2E7D32\">ON</font></b>" else "<b><font color=\"#D12012\">OFF</font></b>"}<br>
+            &#8226; <i>SIM1 Data:</i> ${if (sim1) "<b><font color=\"#2E7D32\">ON</font></b>" else "<b><font color=\"#D12012\">OFF</font></b>"}<br>
+            &#8226; <i>SIM2 Data:</i> ${if (sim2) "<b><font color=\"#2E7D32\">ON</font></b>" else "<b><font color=\"#D12012\">OFF</font></b>"}<br>
+            &#8226; <i>Raw Mode:</i> <b><font color="#007BFF">${s.networkMode}</font></b><br><br>
+                        
             <font color="#CCCCCC">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</font><br><br>
         
             <font color="#5800D1"><b><u>AR FLOAT</u></b></font><br>

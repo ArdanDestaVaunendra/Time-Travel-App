@@ -14,7 +14,6 @@ import android.text.TextWatcher
 import android.view.inputmethod.InputMethodManager
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import kotlin.toString
 
 class PresetActivity : AppCompatActivity() {
 
@@ -216,7 +215,6 @@ class PresetActivity : AppCompatActivity() {
         currentSettings.currentStatusMode = "PRESET"
         currentSettings.isVolumeTriggerForTime = false
 
-        // --- BALANCED DEFAULTS PRESET ---
         currentSettings.is24HourFormat = PresetDefaults.IS_24H
         currentSettings.floatDelay = PresetDefaults.FLOAT_DELAY_SEC
         currentSettings.globalDelay = PresetDefaults.GLOBAL_DELAY_MS
@@ -229,7 +227,7 @@ class PresetActivity : AppCompatActivity() {
         currentSettings.predictionTarget = PresetDefaults.PREDICTION_TARGET
         currentSettings.dateLanguage = PresetDefaults.DATE_LANGUAGE
         currentSettings.stackSystem = PresetDefaults.STACK_SYSTEM
-        // -------------------------------
+        currentSettings.networkMode = "SIM1_5G"
 
         prefManager.saveActiveSession(currentSettings)
     }
@@ -269,6 +267,11 @@ class PresetActivity : AppCompatActivity() {
         val activeMarqueeTextHtml = android.text.TextUtils.htmlEncode(activeMarqueeText)
 
         val activePinHtml = android.text.TextUtils.htmlEncode(activePin)
+        val netMode = currentSettings.networkMode.uppercase()
+        val isWifi = netMode.contains("WIFI")
+        val use5g = netMode.contains("5G")
+        val sim1 = netMode.contains("SIM1") || netMode.contains("DUAL") || (!isWifi)
+        val sim2 = netMode.contains("SIM2") || netMode.contains("DUAL")
 
         val infoMessageHtml = """
             <center>
@@ -320,6 +323,15 @@ class PresetActivity : AppCompatActivity() {
             &#8226; <i>Date Language:</i> <b><font color="#007BFF">${PresetDefaults.DATE_LANGUAGE.uppercase()}</font></b><br>
             &#8226; <i>Time Format:</i> <b><font color="#007BFF">${if (PresetDefaults.IS_24H) "24-Hour" else "12-Hour"}</font></b><br><br>
             
+            <font color="#CCCCCC">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</font><br><br>
+            
+            <font color="#5800D1"><b><u>NETWORK STATUS</u></b></font><br>
+            &#8226; <i>Wi-Fi:</i> ${if (isWifi) "<b><font color=\"#2E7D32\">ON</font></b>" else "<b><font color=\"#D12012\">OFF</font></b>"}<br>
+            &#8226; <i>5G Icon:</i> ${if (use5g) "<b><font color=\"#2E7D32\">ON</font></b>" else "<b><font color=\"#D12012\">OFF</font></b>"}<br>
+            &#8226; <i>SIM1 Data:</i> ${if (sim1) "<b><font color=\"#2E7D32\">ON</font></b>" else "<b><font color=\"#D12012\">OFF</font></b>"}<br>
+            &#8226; <i>SIM2 Data:</i> ${if (sim2) "<b><font color=\"#2E7D32\">ON</font></b>" else "<b><font color=\"#D12012\">OFF</font></b>"}<br>
+            &#8226; <i>Raw Mode:</i> <b><font color="#007BFF">${currentSettings.networkMode}</font></b><br><br>
+                        
             <font color="#CCCCCC">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</font><br><br>
         
             <font color="#D12012"><b><u>NOTE:</u></b></font><br>

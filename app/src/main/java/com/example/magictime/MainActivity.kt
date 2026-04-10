@@ -9,6 +9,9 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.magictime.databinding.ActivityMainBinding
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
 
 class MainActivity : AppCompatActivity() {
 
@@ -25,6 +28,12 @@ class MainActivity : AppCompatActivity() {
 
         setupMenuUI()
         updateStatusBanner()
+
+        binding.btnEditLayout.setOnClickListener {
+            startActivity(Intent(this, EditLayoutActivity::class.java))
+        }
+
+        setupDndButton()
 
         binding.btnStartMagic.setOnClickListener {
             killAllToasts()
@@ -53,6 +62,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         updateStatusBanner()
+        updateDndButtonState()
     }
 
     private fun setupMenuUI() {
@@ -142,6 +152,58 @@ class MainActivity : AppCompatActivity() {
                 tvStatus.text = "Ready to Perform"
             }
         }
+    }
+
+    private fun setupDndButton() {
+        binding.btnUseDnd.setOnClickListener {
+            if (!DndManager.hasAccess(this)) {
+                DndManager.openAccessSettings(this)
+                showToast("Grant Do Not Disturb access first, then tap again.")
+                return@setOnClickListener
+            }
+
+            val next = !DndManager.isAutoEnabled(this)
+            DndManager.setAutoEnabled(this, next)
+            updateDndButtonState()
+
+            showToast(if (next) "Auto Do Not Disturb enabled" else "Auto Do Not Disturb disabled")
+        }
+
+        updateDndButtonState()
+    }
+
+    private fun updateDndButtonState() {
+        val enabled = DndManager.isAutoEnabled(this)
+        val hasAccess = DndManager.hasAccess(this)
+
+        if (!hasAccess) {
+            binding.btnUseDnd.text = "Use Do Not Disturb: Permission Required"
+            binding.btnUseDnd.alpha = 0.9f
+            return
+        }
+
+        val base = if (enabled) "Use Do Not Disturb: ON" else "Use Do Not Disturb: OFF"
+        val spannable = SpannableString(base)
+
+        val stateText = if (enabled) "ON" else "OFF"
+        val start = base.lastIndexOf(stateText)
+        val end = start + stateText.length
+
+        val stateColor = if (enabled) {
+            android.graphics.Color.parseColor("#2E7D32")
+        } else {
+            android.graphics.Color.parseColor("#9E9E9E")
+        }
+
+        spannable.setSpan(
+            ForegroundColorSpan(stateColor),
+            start,
+            end,
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+
+        binding.btnUseDnd.text = spannable
+        binding.btnUseDnd.alpha = 1f
     }
 
     private fun showMenuInfoDialog(title: String, message: String) {

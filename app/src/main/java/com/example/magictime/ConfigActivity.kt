@@ -446,6 +446,22 @@ class ConfigActivity : AppCompatActivity() {
         updateUIText()
     }
 
+    private fun buildNetworkMode(): String {
+        return if (binding.switchShowWifi.isChecked) {
+            "WIFI"
+        } else {
+            val simMode = when {
+                binding.switchSignal1.isChecked && binding.switchSignal2.isChecked -> "DUAL"
+                binding.switchSignal1.isChecked -> "SIM1"
+                binding.switchSignal2.isChecked -> "SIM2"
+                else -> "SIM1"
+            }
+
+            val genMode = if (binding.switch5G.isChecked) "5G" else "4G"
+            "${simMode}_${genMode}"
+        }
+    }
+
     private fun saveSettings() {
         val routines = appSettings.activeRoutines.toMutableSet()
         if (binding.switchTimeTravel.isChecked) routines.add("TIMEJUMP") else routines.remove("TIMEJUMP")
@@ -459,6 +475,7 @@ class ConfigActivity : AppCompatActivity() {
         appSettings.showOperator = binding.switchShowCarrier.isChecked
         appSettings.showRunningText = binding.switchShowMarquee.isChecked
         appSettings.is24HourFormat = binding.rbFormat24.isChecked
+        appSettings.networkMode = buildNetworkMode()
         val revealInput = binding.etRevealText.text.toString().trim().ifBlank { Defaults.REVEAL_TEXT }
         appSettings.revealText = revealInput
         appSettings.revealDelay = revealDelaySeconds

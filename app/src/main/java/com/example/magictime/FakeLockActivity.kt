@@ -55,6 +55,7 @@ import java.util.Locale
 import kotlin.math.abs
 import kotlinx.coroutines.withContext
 import androidx.core.view.ViewCompat
+import android.view.WindowManager
 
 @Suppress("DEPRECATION")
 class FakeLockActivity : AppCompatActivity(), SensorEventListener {
@@ -165,13 +166,20 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                if (binding.pinScreenContainer.visibility == View.VISIBLE) {
-                    hidePinScreen()
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_SECURE,
+            WindowManager.LayoutParams.FLAG_SECURE
+        )
+
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : androidx.activity.OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    if (binding.pinScreenContainer.visibility == View.VISIBLE) {
+                        hidePinScreen()
+                    }
                 }
-            }
-        })
+            })
 
         try {
             binding = ActivityFakeLockBinding.inflate(layoutInflater)
@@ -181,7 +189,10 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                 val barsVisible = insets.isVisible(WindowInsetsCompat.Type.systemBars())
                 if (barsVisible) {
                     handler.post {
-                        try { enforceImmersiveMode() } catch (_: Exception) {}
+                        try {
+                            enforceImmersiveMode()
+                        } catch (_: Exception) {
+                        }
                     }
                 }
                 insets
@@ -197,12 +208,17 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         binding.tvTicker.isSelected = true
         binding.tvMarqueeBottom.isSelected = true
 
-        try { enforceImmersiveMode() } catch (_: Exception) {}
+        try {
+            enforceImmersiveMode()
+        } catch (_: Exception) {
+        }
 
         screenHeight = resources.displayMetrics.heightPixels
         screenWidth = resources.displayMetrics.widthPixels
 
         loadSettings()
+
+        LockscreenLayoutRuntime.apply(LayoutConfigStore(this), binding)
 
         isPinEnabled = appSettings.isPinEnabled
         correctPin = prefs.getString("CUSTOM_PIN", Defaults.PIN) ?: Defaults.PIN
@@ -215,12 +231,12 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         setupShortcuts()
         setupPinScreenInteractions()
         loadFloatConfigs()
-
     }
 
     override fun onResume() {
         super.onResume()
 
+        DndManager.applyIfEnabled(this)
         binding.root.alpha = 1f
         binding.root.visibility = View.VISIBLE
 
@@ -230,10 +246,16 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
         appSettings = prefManager.getActiveSession()
         loadSettings()
+
+        LockscreenLayoutRuntime.apply(LayoutConfigStore(this), binding)
+
         loadFloatConfigs()
 
         loadWallpaper()
-        try { enforceImmersiveMode() } catch (_: Exception) {}
+        try {
+            enforceImmersiveMode()
+        } catch (_: Exception) {
+        }
 
         sensorManager.unregisterListener(this)
 
@@ -253,6 +275,8 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
     override fun onPause() {
         super.onPause()
+
+        DndManager.restoreIfNeeded(this)
         unregisterReceiver(batteryReceiver)
         sensorManager.unregisterListener(this)
         handler.removeCallbacksAndMessages(null)
@@ -288,7 +312,8 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         revealTarget = appSettings.predictionTarget
         useIndonesianLanguage = (appSettings.predictionLanguage == "id")
 
-        val isProfileMode = (appSettings.currentStatusMode == "PRESET") || (appSettings.currentStatusMode == "LOADED")
+        val isProfileMode =
+            (appSettings.currentStatusMode == "PRESET") || (appSettings.currentStatusMode == "LOADED")
 
         val isWifiOn: Boolean
         val use5G: Boolean
@@ -343,7 +368,8 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         revealText = if (isProfileMode) {
             appSettings.revealText.ifBlank { defaultReveal }
         } else {
-            (prefs.getString("REVEAL_TEXT", defaultReveal) ?: defaultReveal).ifBlank { defaultReveal }
+            (prefs.getString("REVEAL_TEXT", defaultReveal)
+                ?: defaultReveal).ifBlank { defaultReveal }
         }
 
         revealDelay = if (isProfileMode) {
@@ -365,13 +391,19 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 if (uriString != null) {
-                    val sourceBitmap = MediaStore.Images.Media.getBitmap(contentResolver, Uri.parse(uriString))
+                    val sourceBitmap =
+                        MediaStore.Images.Media.getBitmap(contentResolver, Uri.parse(uriString))
 
                     withContext(Dispatchers.Main) {
                         binding.imgBackground.setImageBitmap(sourceBitmap)
                     }
 
-                    val scaledBitmap = Bitmap.createScaledBitmap(sourceBitmap, sourceBitmap.width / 5, sourceBitmap.height / 5, false)
+                    val scaledBitmap = Bitmap.createScaledBitmap(
+                        sourceBitmap,
+                        sourceBitmap.width / 5,
+                        sourceBitmap.height / 5,
+                        false
+                    )
                     blurredWallpaperBitmap = blurBitmap(this@FakeLockActivity, scaledBitmap, 20f)
 
                 } else {
@@ -392,7 +424,8 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         val controller = WindowCompat.getInsetsController(window, window.decorView)
         controller.hide(WindowInsetsCompat.Type.systemBars())
-        controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        controller.systemBarsBehavior =
+            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
     }
 
     // ==========================================
@@ -412,14 +445,17 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     private fun updateTimeUI() {
         val now = System.currentTimeMillis() + (currentDisplayOffset * 1000)
 
-        val isProfileMode = (appSettings.currentStatusMode == "PRESET") || (appSettings.currentStatusMode == "LOADED")
-        val is24Hour = if (isProfileMode) appSettings.is24HourFormat else prefs.getBoolean("IS_24H", true)
+        val isProfileMode =
+            (appSettings.currentStatusMode == "PRESET") || (appSettings.currentStatusMode == "LOADED")
+        val is24Hour =
+            if (isProfileMode) appSettings.is24HourFormat else prefs.getBoolean("IS_24H", true)
         val timePattern = if (is24Hour) "HH:mm" else "h:mm"
         val bigFormat = SimpleDateFormat(timePattern, Locale.getDefault())
 
         try {
             binding.tvBigClock.text = bigFormat.format(Date(now))
-        } catch (e: Exception) {}
+        } catch (e: Exception) {
+        }
 
         val langCode = appSettings.dateLanguage
         val datePattern: String
@@ -436,7 +472,8 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         val dateFormat = SimpleDateFormat(datePattern, locale)
         try {
             binding.tvDate.text = dateFormat.format(Date(now))
-        } catch (e: Exception) {}
+        } catch (e: Exception) {
+        }
     }
 
     // ==========================================
@@ -541,6 +578,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                     isSwipingForUnlock = true
                     true
                 }
+
                 MotionEvent.ACTION_MOVE -> {
                     if (!isSwipingForUnlock) return@setOnTouchListener false
 
@@ -556,6 +594,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                     }
                     true
                 }
+
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                     if (!isSwipingForUnlock) return@setOnTouchListener false
                     isSwipingForUnlock = false
@@ -577,6 +616,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                     }
                     true
                 }
+
                 else -> false
             }
         }
@@ -600,7 +640,8 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                     }
                     startActivity(intent)
                     overridePendingTransition(R.anim.slide_in_right, android.R.anim.fade_out)
-                } catch (e: Exception) {}
+                } catch (e: Exception) {
+                }
             }
         }
         applySwipeEffect(binding.bgCamera, false, openCameraAction)
@@ -642,6 +683,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                         v.animate().scaleX(1.1f).scaleY(1.1f).setDuration(100).start()
                         return true
                     }
+
                     MotionEvent.ACTION_MOVE -> {
                         val dx = event.rawX - startX
                         val validDx = if (isSwipeRight) {
@@ -658,6 +700,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                         v.scaleY = dynamicScale
                         return true
                     }
+
                     MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                         val dx = event.rawX - startX
                         val validDx = if (isSwipeRight) {
@@ -736,15 +779,21 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                         } else if (inputStr.startsWith("00") && inputStr.length > 2) {
                             secretMode = 3
                             val v = inputStr.substring(2).toIntOrNull() ?: 0
-                            if (v in 1..13) { secretCardValue = v.toString(); isValid = true }
+                            if (v in 1..13) {
+                                secretCardValue = v.toString(); isValid = true
+                            }
                         } else if (inputStr.startsWith("0") && inputStr.length > 1) {
                             secretMode = 2
                             val v = inputStr.substring(1).toIntOrNull() ?: 0
-                            if (v in 1..13) { secretCardValue = v.toString(); isValid = true }
+                            if (v in 1..13) {
+                                secretCardValue = v.toString(); isValid = true
+                            }
                         } else {
                             secretMode = 0
                             val v = inputStr.toIntOrNull() ?: 0
-                            if (v in 1..13) { secretCardValue = v.toString(); isValid = true }
+                            if (v in 1..13) {
+                                secretCardValue = v.toString(); isValid = true
+                            }
                         }
 
                         if (isValid) {
@@ -757,10 +806,12 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                         currentPinInput = ""
                         updatePinIndicators()
                     }
+
                     2 -> {
                         val inputStr = currentPinInput
                         val inputInt = inputStr.toIntOrNull() ?: 0
-                        val isPresetMode = (appSettings.currentStatusMode == "PRESET") || (appSettings.currentStatusMode == "LOADED")
+                        val isPresetMode =
+                            (appSettings.currentStatusMode == "PRESET") || (appSettings.currentStatusMode == "LOADED")
                         val selectedStack = if (isPresetMode) {
                             when (appSettings.stackSystem.uppercase()) {
                                 "MNEMONICA" -> 1
@@ -782,6 +833,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                                     "Ah", "9d"
                                 )
                             }
+
                             2 -> {
                                 listOf(
                                     "Js", "Kc", "5c", "2h", "9s", "As", "3h", "6c", "8d", "Ac",
@@ -792,6 +844,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                                     "2c", "9d"
                                 )
                             }
+
                             else -> {
                                 listOf(
                                     "10c", "7h", "4s", "Ad", "Jd", "6c", "7c", "9s", "6d", "Ac",
@@ -828,7 +881,8 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
                             currentDisplayOffset = offsetSec.toLong()
                             baseRealTime = System.currentTimeMillis()
-                            baseSyntheticTime = System.currentTimeMillis() + (currentDisplayOffset * 1000)
+                            baseSyntheticTime =
+                                System.currentTimeMillis() + (currentDisplayOffset * 1000)
 
                             isMagicActivated = false
                             vibratePattern(isDouble = true)
@@ -848,23 +902,32 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                                 val valueInt = secretCardValue.toIntOrNull() ?: 1
                                 val suitCode = inputInt
 
-                                val suitLetter = when (suitCode) { 1 -> "d"; 2 -> "c"; 3 -> "h"; 4 -> "s"; else -> "s" }
-                                val valLetter = when (valueInt) { 1 -> "A"; 11 -> "J"; 12 -> "Q"; 13 -> "K"; else -> valueInt.toString() }
+                                val suitLetter = when (suitCode) {
+                                    1 -> "d"; 2 -> "c"; 3 -> "h"; 4 -> "s"; else -> "s"
+                                }
+                                val valLetter = when (valueInt) {
+                                    1 -> "A"; 11 -> "J"; 12 -> "Q"; 13 -> "K"; else -> valueInt.toString()
+                                }
                                 val targetCard = "$valLetter$suitLetter"
 
                                 when (secretMode) {
                                     0 -> {
                                         generateCardPrediction(secretCardValue, suitCode)
                                     }
+
                                     2 -> {
                                         val idx = bhStack.indexOf(targetCard)
-                                        forceCardPrediction = if (idx != -1) (idx + 1).toString() else "?"
+                                        forceCardPrediction =
+                                            if (idx != -1) (idx + 1).toString() else "?"
                                     }
+
                                     3 -> {
                                         val idx = bhStack.indexOf(targetCard)
                                         if (idx != -1) {
-                                            val before = if (idx > 0) bhStack[idx - 1] else bhStack.last()
-                                            val after = if (idx < bhStack.size - 1) bhStack[idx + 1] else bhStack.first()
+                                            val before =
+                                                if (idx > 0) bhStack[idx - 1] else bhStack.last()
+                                            val after =
+                                                if (idx < bhStack.size - 1) bhStack[idx + 1] else bhStack.first()
                                             forceCardPrediction = "$before - $after"
                                         } else {
                                             forceCardPrediction = "?"
@@ -877,7 +940,8 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
                         if (isPredictionValid && secretMode != 4) {
                             vibratePattern(isDouble = true)
-                            val isProfileMode = (appSettings.currentStatusMode == "PRESET") || (appSettings.currentStatusMode == "LOADED")
+                            val isProfileMode =
+                                (appSettings.currentStatusMode == "PRESET") || (appSettings.currentStatusMode == "LOADED")
                             val baseCustomText = if (isProfileMode) {
                                 appSettings.revealText
                             } else {
@@ -935,7 +999,14 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     }
 
     private fun updatePinIndicators() {
-        val dots = listOf(binding.dot1, binding.dot2, binding.dot3, binding.dot4, binding.dot5, binding.dot6)
+        val dots = listOf(
+            binding.dot1,
+            binding.dot2,
+            binding.dot3,
+            binding.dot4,
+            binding.dot5,
+            binding.dot6
+        )
         for (i in dots.indices) {
             dots[i].setBackgroundResource(if (i < currentPinInput.length) R.drawable.bg_pin_dot_filled else R.drawable.bg_pin_dot_empty)
         }
@@ -958,7 +1029,8 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             binding.tvEnterPinLabel.visibility = View.VISIBLE
 
             val shake = TranslateAnimation(-10f, 10f, 0f, 0f).apply {
-                duration = 50; repeatCount = 5; repeatMode = android.view.animation.Animation.REVERSE
+                duration = 50; repeatCount = 5; repeatMode =
+                android.view.animation.Animation.REVERSE
             }
             binding.tvEnterPinLabel.startAnimation(shake)
 
@@ -1008,22 +1080,32 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         binding.pinScreenContainer.translationY = 0f
 
         val startScale = 0.7f
-        binding.bottomKeypadContainer.scaleX = startScale; binding.bottomKeypadContainer.scaleY = startScale; binding.bottomKeypadContainer.alpha = 0f
-        binding.tvEnterPinLabel.scaleX = startScale; binding.tvEnterPinLabel.scaleY = startScale; binding.tvEnterPinLabel.alpha = 0f
-        binding.tvPinInfoLabel.scaleX = startScale; binding.tvPinInfoLabel.scaleY = startScale; binding.tvPinInfoLabel.alpha = 0f
-        binding.ivLockIcon.scaleX = startScale; binding.ivLockIcon.scaleY = startScale; binding.ivLockIcon.alpha = 0f
+        binding.bottomKeypadContainer.scaleX = startScale; binding.bottomKeypadContainer.scaleY =
+            startScale; binding.bottomKeypadContainer.alpha = 0f
+        binding.tvEnterPinLabel.scaleX = startScale; binding.tvEnterPinLabel.scaleY =
+            startScale; binding.tvEnterPinLabel.alpha = 0f
+        binding.tvPinInfoLabel.scaleX = startScale; binding.tvPinInfoLabel.scaleY =
+            startScale; binding.tvPinInfoLabel.alpha = 0f
+        binding.ivLockIcon.scaleX = startScale; binding.ivLockIcon.scaleY =
+            startScale; binding.ivLockIcon.alpha = 0f
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val blurEffect = RenderEffect.createBlurEffect(350f, 350f, Shader.TileMode.CLAMP)
             binding.imgBackground.setRenderEffect(blurEffect)
 
-            binding.imgBackground.setColorFilter(Color.parseColor("#36666666"), PorterDuff.Mode.SRC_OVER)
+            binding.imgBackground.setColorFilter(
+                Color.parseColor("#36666666"),
+                PorterDuff.Mode.SRC_OVER
+            )
 
             binding.imgPinBackgroundBlurred.visibility = View.GONE
         } else {
             blurredWallpaperBitmap?.let {
                 binding.imgPinBackgroundBlurred.setImageBitmap(it)
-                binding.imgPinBackgroundBlurred.setColorFilter(Color.parseColor("#99000000"), PorterDuff.Mode.SRC_OVER)
+                binding.imgPinBackgroundBlurred.setColorFilter(
+                    Color.parseColor("#99000000"),
+                    PorterDuff.Mode.SRC_OVER
+                )
                 binding.imgPinBackgroundBlurred.visibility = View.VISIBLE
             }
         }
@@ -1156,28 +1238,41 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             when (revealTarget) {
                 "CARRIER" -> viewsToAnimate.add(binding.tvTicker)
                 "MARQUEE" -> viewsToAnimate.add(binding.tvMarqueeBottom)
-                "BOTH" -> { viewsToAnimate.add(binding.tvTicker); viewsToAnimate.add(binding.tvMarqueeBottom) }
+                "BOTH" -> {
+                    viewsToAnimate.add(binding.tvTicker); viewsToAnimate.add(binding.tvMarqueeBottom)
+                }
             }
 
             for (v in viewsToAnimate) {
                 if (v !is TextView) continue
 
                 v.animate().alpha(0f).setDuration(200).withEndAction {
-                    if (cancelReveal) { restoreOriginalText(v); return@withEndAction }
+                    if (cancelReveal) {
+                        restoreOriginalText(v); return@withEndAction
+                    }
 
                     v.animate().alpha(1f).setDuration(200).withEndAction {
-                        if (cancelReveal) { restoreOriginalText(v); return@withEndAction }
+                        if (cancelReveal) {
+                            restoreOriginalText(v); return@withEndAction
+                        }
 
                         v.animate().alpha(0f).setDuration(200).withEndAction {
-                            if (cancelReveal) { restoreOriginalText(v); return@withEndAction }
+                            if (cancelReveal) {
+                                restoreOriginalText(v); return@withEndAction
+                            }
 
                             v.animate().alpha(1f).setDuration(200).withEndAction {
-                                if (cancelReveal) { restoreOriginalText(v); return@withEndAction }
+                                if (cancelReveal) {
+                                    restoreOriginalText(v); return@withEndAction
+                                }
 
                                 v.animate().alpha(0f).setDuration(250).withEndAction {
-                                    if (cancelReveal) { restoreOriginalText(v); return@withEndAction }
+                                    if (cancelReveal) {
+                                        restoreOriginalText(v); return@withEndAction
+                                    }
 
-                                    v.text = ""; v.alpha = 1f; v.setTextColor(Color.WHITE); v.isSelected = true
+                                    v.text = ""; v.alpha =
+                                    1f; v.setTextColor(Color.WHITE); v.isSelected = true
                                     var currentRevealText = ""
                                     val safeRevealText = revealText
 
@@ -1270,10 +1365,12 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         val duration = 300L
         val interpolator = AccelerateInterpolator()
 
-        binding.ivLockIcon.animate().alpha(0f).setDuration(duration).setInterpolator(interpolator).start()
+        binding.ivLockIcon.animate().alpha(0f).setDuration(duration).setInterpolator(interpolator)
+            .start()
 
         fun expandAndFadeOut(v: View) {
-            v.animate().scaleX(1.5f).scaleY(1.5f).alpha(0f).setDuration(duration).setInterpolator(interpolator).start()
+            v.animate().scaleX(1.5f).scaleY(1.5f).alpha(0f).setDuration(duration)
+                .setInterpolator(interpolator).start()
         }
 
         expandAndFadeOut(binding.tvEnterPinLabel); expandAndFadeOut(binding.tvPinInfoLabel)
@@ -1317,7 +1414,8 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
         floatActive = appSettings.activeRoutines.contains("FLOAT")
         floatScale = (appSettings.objectScale * 100).toInt()
-        val isProfileMode = (appSettings.currentStatusMode == "PRESET") || (appSettings.currentStatusMode == "LOADED")
+        val isProfileMode =
+            (appSettings.currentStatusMode == "PRESET") || (appSettings.currentStatusMode == "LOADED")
 
         val isPresetMode = appSettings.currentStatusMode == "PRESET"
         useShakeTrigger = if (isPresetMode) {
@@ -1342,7 +1440,9 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                     try {
                         binding.imgFloatObject.setImageURI(Uri.parse(floatUri))
                         isImageSet = true
-                    } catch (t: Throwable) { t.printStackTrace() }
+                    } catch (t: Throwable) {
+                        t.printStackTrace()
+                    }
                 } else {
                     val resId = resources.getIdentifier(floatUri, "drawable", packageName)
                     if (resId != 0) {
@@ -1360,13 +1460,22 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
         val speedMode = fPrefs.getString("FLOAT_SPEED_MODE", "MEDIUM")
         when (speedMode) {
-            "SLOW" -> { friction = 0.50f; sensitivity = 0.75f }
-            "FAST" -> { friction = 0.80f; sensitivity = 1.20f }
-            else -> { friction = 0.65f; sensitivity = 1.00f }
+            "SLOW" -> {
+                friction = 0.50f; sensitivity = 0.75f
+            }
+
+            "FAST" -> {
+                friction = 0.80f; sensitivity = 1.20f
+            }
+
+            else -> {
+                friction = 0.65f; sensitivity = 1.00f
+            }
         }
 
         try {
-            val safeScreenWidth = if (screenWidth > 0) screenWidth.toFloat() else resources.displayMetrics.widthPixels.toFloat()
+            val safeScreenWidth =
+                if (screenWidth > 0) screenWidth.toFloat() else resources.displayMetrics.widthPixels.toFloat()
             val targetWidth = (floatScale / 100f) * safeScreenWidth
             val targetHeight = targetWidth * 1.41f
             val params = binding.imgFloatObject.layoutParams
@@ -1374,7 +1483,9 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             binding.imgFloatObject.layoutParams = params
             binding.imgFloatObject.scaleType = android.widget.ImageView.ScaleType.FIT_XY
             binding.imgFloatObject.requestLayout()
-        } catch (t: Throwable) { t.printStackTrace() }
+        } catch (t: Throwable) {
+            t.printStackTrace()
+        }
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -1386,11 +1497,13 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                     velX = 0f; velY = 0f
                     true
                 }
+
                 MotionEvent.ACTION_MOVE -> {
                     v.x = event.rawX - v.width / 2
                     v.y = event.rawY - v.height / 2
                     true
                 }
+
                 MotionEvent.ACTION_UP -> {
                     isBeingDragged = false
 
@@ -1423,6 +1536,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                     }
                     true
                 }
+
                 else -> false
             }
         }
@@ -1461,8 +1575,10 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         var newX = binding.imgFloatObject.x + velX
         var newY = binding.imgFloatObject.y + velY
 
-        val safeScreenWidth = if (screenWidth > 0) screenWidth.toFloat() else resources.displayMetrics.widthPixels.toFloat()
-        val safeScreenHeight = if (screenHeight > 0) screenHeight.toFloat() else resources.displayMetrics.heightPixels.toFloat()
+        val safeScreenWidth =
+            if (screenWidth > 0) screenWidth.toFloat() else resources.displayMetrics.widthPixels.toFloat()
+        val safeScreenHeight =
+            if (screenHeight > 0) screenHeight.toFloat() else resources.displayMetrics.heightPixels.toFloat()
 
         val objWidth = binding.imgFloatObject.width.toFloat()
         val objHeight = binding.imgFloatObject.height.toFloat()
@@ -1472,10 +1588,18 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         val minLimitY = if (safeScreenHeight > objHeight) 0f else safeScreenHeight - objHeight
         val maxLimitY = if (safeScreenHeight > objHeight) safeScreenHeight - objHeight else 0f
 
-        if (newX < minLimitX) { newX = minLimitX; velX = 0f }
-        if (newX > maxLimitX) { newX = maxLimitX; velX = 0f }
-        if (newY < minLimitY) { newY = minLimitY; velY = 0f }
-        if (newY > maxLimitY) { newY = maxLimitY; velY = 0f }
+        if (newX < minLimitX) {
+            newX = minLimitX; velX = 0f
+        }
+        if (newX > maxLimitX) {
+            newX = maxLimitX; velX = 0f
+        }
+        if (newY < minLimitY) {
+            newY = minLimitY; velY = 0f
+        }
+        if (newY > maxLimitY) {
+            newY = maxLimitY; velY = 0f
+        }
 
         binding.imgFloatObject.x = newX
         binding.imgFloatObject.y = newY
@@ -1490,13 +1614,19 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         val invertedAlpha = 1f - progress
         val translationUp = -300f * progress
 
-        binding.tvBigClock.translationY = translationUp; binding.tvDate.translationY = translationUp; binding.ivLock.translationY = translationUp
-        binding.tvBigClock.alpha = invertedAlpha; binding.tvDate.alpha = invertedAlpha; binding.ivLock.alpha = invertedAlpha
+        binding.tvBigClock.translationY = translationUp; binding.tvDate.translationY =
+            translationUp; binding.ivLock.translationY = translationUp
+        binding.tvBigClock.alpha = invertedAlpha; binding.tvDate.alpha =
+            invertedAlpha; binding.ivLock.alpha = invertedAlpha
 
-        binding.bgPhone.translationY = 200f * progress; binding.bgPhone.translationX = -150f * progress; binding.bgPhone.alpha = invertedAlpha
-        binding.ivPhone.translationY = 200f * progress; binding.ivPhone.translationX = -150f * progress; binding.ivPhone.alpha = invertedAlpha
-        binding.bgCamera.translationY = 200f * progress; binding.bgCamera.translationX = 150f * progress; binding.bgCamera.alpha = invertedAlpha
-        binding.ivCamera.translationY = 200f * progress; binding.ivCamera.translationX = 150f * progress; binding.ivCamera.alpha = invertedAlpha
+        binding.bgPhone.translationY = 200f * progress; binding.bgPhone.translationX =
+            -150f * progress; binding.bgPhone.alpha = invertedAlpha
+        binding.ivPhone.translationY = 200f * progress; binding.ivPhone.translationX =
+            -150f * progress; binding.ivPhone.alpha = invertedAlpha
+        binding.bgCamera.translationY = 200f * progress; binding.bgCamera.translationX =
+            150f * progress; binding.bgCamera.alpha = invertedAlpha
+        binding.ivCamera.translationY = 200f * progress; binding.ivCamera.translationX =
+            150f * progress; binding.ivCamera.alpha = invertedAlpha
 
         binding.statusBarContainer.alpha = invertedAlpha
         binding.tvTicker.alpha = invertedAlpha
@@ -1508,10 +1638,20 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         val interpolator = OvershootInterpolator(1.2f)
 
         fun resetView(v: View) {
-            v.animate().translationY(0f).translationX(0f).alpha(1f).setDuration(duration).setInterpolator(interpolator).start()
+            v.animate()
+                .translationY(0f)
+                .translationX(0f)
+                .alpha(1f)
+                .setDuration(duration)
+                .setInterpolator(interpolator)
+                .start()
         }
 
-        val views = listOf(binding.tvBigClock, binding.tvDate, binding.ivLock, binding.bgPhone, binding.ivPhone, binding.bgCamera, binding.ivCamera, binding.statusBarContainer, binding.tvTicker, binding.tvMarqueeBottom)
+        val views = listOf(
+            binding.tvBigClock, binding.tvDate, binding.ivLock,
+            binding.bgPhone, binding.ivPhone, binding.bgCamera, binding.ivCamera,
+            binding.statusBarContainer, binding.tvTicker, binding.tvMarqueeBottom
+        )
         views.forEach { resetView(it) }
     }
 
@@ -1522,13 +1662,22 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         prefs.edit().remove("FORCED_FLOAT_CARD").apply()
 
         fun animateOut(v: View, transY: Float, transX: Float) {
-            v.animate().translationY(transY).translationX(transX).alpha(0f).setDuration(duration).setInterpolator(interpolator).start()
+            v.animate().translationY(transY).translationX(transX).alpha(0f).setDuration(duration)
+                .setInterpolator(interpolator).start()
         }
 
-        animateOut(binding.tvBigClock, -500f, 0f); animateOut(binding.tvDate, -500f, 0f); animateOut(binding.ivLock, -500f, 0f)
+        animateOut(binding.tvBigClock, -500f, 0f); animateOut(
+            binding.tvDate,
+            -500f,
+            0f
+        ); animateOut(binding.ivLock, -500f, 0f)
         animateOut(binding.bgPhone, 400f, -300f); animateOut(binding.ivPhone, 400f, -300f)
         animateOut(binding.bgCamera, 400f, 300f); animateOut(binding.ivCamera, 400f, 300f)
-        animateOut(binding.statusBarContainer, 0f, 0f); animateOut(binding.tvTicker, 0f, 0f); animateOut(binding.tvMarqueeBottom, 0f, 0f)
+        animateOut(binding.statusBarContainer, 0f, 0f); animateOut(
+            binding.tvTicker,
+            0f,
+            0f
+        ); animateOut(binding.tvMarqueeBottom, 0f, 0f)
 
         handler.postDelayed({ exitToHomeScreen() }, duration + 50)
     }
@@ -1575,18 +1724,29 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
     private fun generateCardPrediction(valueStr: String, suitCode: Int) {
         val valueInt = valueStr.toIntOrNull() ?: 1
-        val suitLetter = when (suitCode) { 1 -> "d"; 2 -> "c"; 3 -> "h"; 4 -> "s"; else -> "s" }
+        val suitLetter = when (suitCode) {
+            1 -> "d"; 2 -> "c"; 3 -> "h"; 4 -> "s"; else -> "s"
+        }
         val drawableName = "$suitLetter$valueInt"
 
         appSettings.floatTargetCardPath = drawableName
         prefManager.saveActiveSession(appSettings)
 
-        val valueEn = when (valueInt) { 1 -> "Ace"; 11 -> "Jack"; 12 -> "Queen"; 13 -> "King"; else -> valueStr }
-        val valueId = when (valueInt) { 1 -> "As"; 11 -> "Jack"; 12 -> "Queen"; 13 -> "King"; else -> valueStr }
-        val suitEn = when (suitCode) { 1 -> "Diamonds"; 2 -> "Clubs"; 3 -> "Hearts"; 4 -> "Spades"; else -> "" }
-        val suitId = when (suitCode) { 1 -> "Wajik"; 2 -> "Keriting"; 3 -> "Hati"; 4 -> "Sekop"; else -> "" }
+        val valueEn = when (valueInt) {
+            1 -> "Ace"; 11 -> "Jack"; 12 -> "Queen"; 13 -> "King"; else -> valueStr
+        }
+        val valueId = when (valueInt) {
+            1 -> "As"; 11 -> "Jack"; 12 -> "Queen"; 13 -> "King"; else -> valueStr
+        }
+        val suitEn = when (suitCode) {
+            1 -> "Diamonds"; 2 -> "Clubs"; 3 -> "Hearts"; 4 -> "Spades"; else -> ""
+        }
+        val suitId = when (suitCode) {
+            1 -> "Wajik"; 2 -> "Keriting"; 3 -> "Hati"; 4 -> "Sekop"; else -> ""
+        }
 
-        forceCardPrediction = if (useIndonesianLanguage) "$valueId $suitId" else "$valueEn of $suitEn"
+        forceCardPrediction =
+            if (useIndonesianLanguage) "$valueId $suitId" else "$valueEn of $suitEn"
     }
 
     @SuppressLint("NewApi")
@@ -1601,7 +1761,12 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             }
         } else {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrator?.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
+                vibrator?.vibrate(
+                    VibrationEffect.createOneShot(
+                        50,
+                        VibrationEffect.DEFAULT_AMPLITUDE
+                    )
+                )
             } else {
                 vibrator?.vibrate(50)
             }
@@ -1636,6 +1801,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         } catch (_: Exception) {
         }
 
+        DndManager.restoreIfNeeded(this)
         moveTaskToBack(true)
         finishAffinity()
         finishAndRemoveTask()
@@ -1646,11 +1812,13 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         val retryDelays = longArrayOf(0L, 50L, 150L, 300L)
         retryDelays.forEach { d ->
             handler.postDelayed({
-                try { hideSystemUI() } catch (_: Exception) {}
+                try {
+                    hideSystemUI()
+                } catch (_: Exception) {
+                }
             }, d)
         }
     }
-
 }
 
 private fun blurBitmap(context: Context, bitmap: Bitmap, radius: Float): Bitmap {
@@ -1659,11 +1827,14 @@ private fun blurBitmap(context: Context, bitmap: Bitmap, radius: Float): Bitmap 
         try {
             val result = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(result)
-            val blurEffect = RenderEffect.createBlurEffect(clampedRadius, clampedRadius, Shader.TileMode.CLAMP)
+            val blurEffect =
+                RenderEffect.createBlurEffect(clampedRadius, clampedRadius, Shader.TileMode.CLAMP)
             val paint = Paint().apply { isFilterBitmap = true }
             canvas.drawBitmap(bitmap, 0f, 0f, paint)
             return result
-        } catch (e: Exception) { e.printStackTrace() }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     var rs: RenderScript? = null
@@ -1685,23 +1856,25 @@ private fun blurBitmap(context: Context, bitmap: Bitmap, radius: Float): Bitmap 
         e.printStackTrace()
         bitmap
     } finally {
-        try { script?.destroy()
+        try {
+            script?.destroy()
         } catch (_: Throwable) {
 
         }
-        try { inputAlloc?.destroy() }
-        catch (_: Throwable) {
-
-        }
-        try { outputAlloc?.destroy()
+        try {
+            inputAlloc?.destroy()
         } catch (_: Throwable) {
 
         }
-        try { rs?.destroy()
+        try {
+            outputAlloc?.destroy()
+        } catch (_: Throwable) {
+
+        }
+        try {
+            rs?.destroy()
         } catch (_: Throwable) {
 
         }
     }
-
-
 }
