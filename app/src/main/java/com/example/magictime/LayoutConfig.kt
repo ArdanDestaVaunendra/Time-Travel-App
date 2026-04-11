@@ -11,5 +11,8 @@ data class LayoutConfig(
     var operator: Pos = Pos(),
     var marquee: Pos = Pos(),
     var statusBar: Pos = Pos(),
-    var date: Pos = Pos()
+    var date: Pos = Pos(),
+    var lockIcon: Pos? = null,
+    var phoneButton: Pos? = null,
+    var cameraButton: Pos? = null
 )

@@ -166,7 +166,7 @@ class MainActivity : AppCompatActivity() {
             DndManager.setAutoEnabled(this, next)
             updateDndButtonState()
 
-            showToast(if (next) "Auto Do Not Disturb enabled" else "Auto Do Not Disturb disabled")
+            showToast(if (next) "Zero Notif Mode enabled" else "Zero Notif Mode disabled")
         }
 
         updateDndButtonState()
@@ -177,12 +177,12 @@ class MainActivity : AppCompatActivity() {
         val hasAccess = DndManager.hasAccess(this)
 
         if (!hasAccess) {
-            binding.btnUseDnd.text = "Use Do Not Disturb: Permission Required"
+            binding.btnUseDnd.text = "Zero Notif Mode: Permission Required"
             binding.btnUseDnd.alpha = 0.9f
             return
         }
 
-        val base = if (enabled) "Use Do Not Disturb: ON" else "Use Do Not Disturb: OFF"
+        val base = if (enabled) "Zero Notif Mode: ON" else "Zero Notif Mode: OFF"
         val spannable = SpannableString(base)
 
         val stateText = if (enabled) "ON" else "OFF"

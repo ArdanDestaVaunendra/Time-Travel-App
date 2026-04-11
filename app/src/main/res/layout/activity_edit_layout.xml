@@ -20,7 +20,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="centerCrop"
-            android:src="@android:color/black"
+            android:src="@drawable/default_bg"
             android:contentDescription="@null" />
 
         <TextView
@@ -151,6 +151,63 @@
             android:text="Sat, Jan 24"
             android:textColor="#FFFFFF"
             android:textSize="19sp" />
+
+        <ImageView
+            android:id="@+id/ivLockEdit"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_gravity="top|center_horizontal"
+            android:layout_marginTop="21dp"
+            android:padding="24dp"
+            android:src="@drawable/ic_lock"
+            android:tint="#FFFFFF"
+            android:contentDescription="@null" />
+
+        <FrameLayout
+            android:id="@+id/phoneButtonEdit"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="bottom|start"
+            android:layout_marginStart="32dp"
+            android:layout_marginBottom="32dp"
+            android:clipChildren="false"
+            android:clipToPadding="false">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_circle_translucent" />
+
+            <ImageView
+                android:layout_width="63dp"
+                android:layout_height="61dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_phone"
+                android:contentDescription="@null" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/cameraButtonEdit"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="32dp"
+            android:layout_marginBottom="32dp"
+            android:clipChildren="false"
+            android:clipToPadding="false">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_circle_translucent" />
+
+            <ImageView
+                android:layout_width="60dp"
+                android:layout_height="61dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_camera"
+                android:contentDescription="@null" />
+        </FrameLayout>
 
         <TextView
             android:id="@+id/tvMarqueeEdit"

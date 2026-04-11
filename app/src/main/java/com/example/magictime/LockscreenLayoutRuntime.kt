@@ -17,6 +17,22 @@ object LockscreenLayoutRuntime {
         applyPosAndScaleTopStart(binding.tvTicker, c.operator)
         applyPosAndScaleMarquee(binding.tvMarqueeBottom, c.marquee)
         applyPosAndScaleStatusBarYOnly(binding.statusBarContainer, c.statusBar)
+
+        c.lockIcon?.let { pos ->
+            applyPosAndScaleTopStart(binding.ivLock, pos)
+        }
+
+        c.phoneButton?.let { pos ->
+            applyPosAndScaleTopStart(binding.bgPhone, pos)
+            binding.ivPhone.scaleX = pos.scale
+            binding.ivPhone.scaleY = pos.scale
+        }
+
+        c.cameraButton?.let { pos ->
+            applyPosAndScaleTopStart(binding.bgCamera, pos)
+            binding.ivCamera.scaleX = pos.scale
+            binding.ivCamera.scaleY = pos.scale
+        }
     }
 
     private fun applyPosAndScaleStatusBarYOnly(view: View, pos: Pos) {

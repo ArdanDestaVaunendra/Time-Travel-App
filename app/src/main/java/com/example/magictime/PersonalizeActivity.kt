@@ -99,8 +99,14 @@ class PersonalizeActivity : AppCompatActivity() {
     }
 
     private fun setupUIFromSettings() {
-        currentSettings.wallpaperPath?.let {
-            try { binding.imgPreviewWallpaper.setImageURI(Uri.parse(it)) } catch (e: Exception) {}
+        if (!currentSettings.wallpaperPath.isNullOrBlank()) {
+            try {
+                binding.imgPreviewWallpaper.setImageURI(Uri.parse(currentSettings.wallpaperPath))
+            } catch (e: Exception) {
+                binding.imgPreviewWallpaper.setImageResource(R.drawable.default_bg)
+            }
+        } else {
+            binding.imgPreviewWallpaper.setImageResource(R.drawable.default_bg)
         }
 
         binding.switchEnablePin.isChecked = currentSettings.isPinEnabled

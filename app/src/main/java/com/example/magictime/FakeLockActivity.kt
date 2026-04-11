@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -56,6 +57,7 @@ import kotlin.math.abs
 import kotlinx.coroutines.withContext
 import androidx.core.view.ViewCompat
 import android.view.WindowManager
+import kotlin.div
 
 @Suppress("DEPRECATION")
 class FakeLockActivity : AppCompatActivity(), SensorEventListener {
@@ -68,7 +70,6 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     private lateinit var prefManager: PreferenceManager
     private lateinit var appSettings: AppSettings
 
-    // === VARIABEL GENERAL & UI ===
     private var blurredWallpaperBitmap: Bitmap? = null
     private var screenHeight = 0
     private var screenWidth = 0
@@ -78,7 +79,6 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     private var isSwipingForUnlock = false
     private var useIndonesianLanguage = true
 
-    // === VARIABEL TIME TRAVEL ===
     private var isTimeTravelEnabled = true
     private var isMagicActivated = false
     private var currentDisplayOffset = 0L
@@ -87,7 +87,6 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     private var baseRealTime: Long = 0L
     private var baseSyntheticTime: Long = 0L
 
-    // === VARIABEL PIN & PREDICTION ===
     private var isPinEnabled = true
     private var secretMode = 0
     private var correctPin = Defaults.PIN
@@ -99,7 +98,6 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     private var forceCardPrediction = ""
     private var isCardCodeEnabled = true
 
-    // === VARIABEL SECRET REVEAL ===
     private var isRevealEnabled = false
     private var revealText = ""
     private var revealDelay = 3
@@ -108,7 +106,6 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     private var revealDurationMs = 7000L
     private var cancelReveal = false
 
-    // === VARIABEL AR FLOAT & SENSOR ===
     private var temporaryBackCardOverride = false
     private lateinit var sensorManager: SensorManager
     private var accelerometer: Sensor? = null
@@ -129,7 +126,6 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     private var currentAccel = android.hardware.SensorManager.GRAVITY_EARTH
     private var shakeAccel = 0.00f
 
-    // === BATTERY RECEIVER ===
     private val batteryReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             intent?.let {
@@ -159,9 +155,6 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         }
     }
 
-    // ==========================================
-    // LIFECYCLE METHODS
-    // ==========================================
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -282,9 +275,6 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         handler.removeCallbacksAndMessages(null)
     }
 
-    // ==========================================
-    // INITIALIZATION & SETTINGS
-    // ==========================================
     private fun loadSettings() {
         isTimeTravelEnabled = appSettings.activeRoutines.contains("TIMEJUMP")
 
@@ -390,32 +380,34 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                if (uriString != null) {
-                    val sourceBitmap =
-                        MediaStore.Images.Media.getBitmap(contentResolver, Uri.parse(uriString))
-
-                    withContext(Dispatchers.Main) {
-                        binding.imgBackground.setImageBitmap(sourceBitmap)
-                    }
-
-                    val scaledBitmap = Bitmap.createScaledBitmap(
-                        sourceBitmap,
-                        sourceBitmap.width / 5,
-                        sourceBitmap.height / 5,
-                        false
-                    )
-                    blurredWallpaperBitmap = blurBitmap(this@FakeLockActivity, scaledBitmap, 20f)
-
+                val sourceBitmap = if (!uriString.isNullOrBlank()) {
+                    MediaStore.Images.Media.getBitmap(contentResolver, Uri.parse(uriString))
                 } else {
-                    withContext(Dispatchers.Main) {
-                        binding.imgBackground.setBackgroundColor(Color.BLACK)
-                    }
+                    BitmapFactory.decodeResource(resources, R.drawable.default_bg)
                 }
+
+                withContext(Dispatchers.Main) {
+                    binding.imgBackground.setImageBitmap(sourceBitmap)
+                    binding.imgBackground.setBackgroundColor(Color.BLACK)
+                }
+
+                val safeW = (sourceBitmap.width / 5).coerceAtLeast(1)
+                val safeH = (sourceBitmap.height / 5).coerceAtLeast(1)
+                val scaledBitmap = Bitmap.createScaledBitmap(sourceBitmap, safeW, safeH, false)
+                blurredWallpaperBitmap = blurBitmap(this@FakeLockActivity, scaledBitmap, 20f)
+
             } catch (e: Exception) {
                 e.printStackTrace()
                 withContext(Dispatchers.Main) {
-                    binding.imgBackground.setBackgroundColor(Color.parseColor("#121212"))
+                    binding.imgBackground.setImageResource(R.drawable.default_bg)
+                    binding.imgBackground.setBackgroundColor(Color.BLACK)
                 }
+
+                val fallback = BitmapFactory.decodeResource(resources, R.drawable.default_bg)
+                val safeW = (fallback.width / 5).coerceAtLeast(1)
+                val safeH = (fallback.height / 5).coerceAtLeast(1)
+                val scaledBitmap = Bitmap.createScaledBitmap(fallback, safeW, safeH, false)
+                blurredWallpaperBitmap = blurBitmap(this@FakeLockActivity, scaledBitmap, 20f)
             }
         }
     }
@@ -428,9 +420,6 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
     }
 
-    // ==========================================
-    // CLOCK & TIME LOGIC
-    // ==========================================
     private fun startClockLoop() {
         handler.removeCallbacksAndMessages(null)
         val runnable = object : Runnable {
@@ -476,9 +465,6 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         }
     }
 
-    // ==========================================
-    // MAGIC TRIGGERS & GESTURES
-    // ==========================================
     private fun triggerMagic() {
         if (!isTimeTravelEnabled) return
 
@@ -728,9 +714,6 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         })
     }
 
-    // ==========================================
-    // PIN & SECURITY
-    // ==========================================
     private fun setupPinScreenInteractions() {
         for (i in 0..9) {
             val resId = resources.getIdentifier("btnPin$i", "id", packageName)
@@ -1386,9 +1369,6 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         handler.postDelayed({ exitToHomeScreen() }, duration)
     }
 
-    // ==========================================
-    // SENSOR & AR FLOAT LOGIC
-    // ==========================================
     private fun showFloatingObject() {
         if (binding.imgFloatObject.visibility == View.VISIBLE) return
 
@@ -1607,9 +1587,6 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 
-    // ==========================================
-    // UTILS & ANIMATIONS
-    // ==========================================
     private fun applyInteractiveAnimation(progress: Float) {
         val invertedAlpha = 1f - progress
         val translationUp = -300f * progress

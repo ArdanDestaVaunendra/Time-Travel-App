@@ -306,7 +306,6 @@ class LoadSettingActivity : AppCompatActivity() {
                     val dx = ev.rawX - downX
                     val dy = ev.rawY - downY
 
-                    // prioritize horizontal swipe
                     if (kotlin.math.abs(dx) > kotlin.math.abs(dy)) {
                         val next = (startTx + dx).coerceIn(0f, revealWidthPx.toFloat())
                         v.translationX = next

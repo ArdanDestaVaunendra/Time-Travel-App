@@ -361,8 +361,14 @@ class ConfigActivity : AppCompatActivity() {
         offsetMinutes = appSettings.timeJumpOffset
         delaySeconds = (appSettings.globalDelay / 1000).toInt()
 
-        appSettings.wallpaperPath?.let {
-            try { binding.imgPreview.setImageURI(Uri.parse(it)) } catch (e: Exception) {}
+        if (!appSettings.wallpaperPath.isNullOrBlank()) {
+            try {
+                binding.imgPreview.setImageURI(Uri.parse(appSettings.wallpaperPath))
+            } catch (e: Exception) {
+                binding.imgPreview.setImageResource(R.drawable.default_bg)
+            }
+        } else {
+            binding.imgPreview.setImageResource(R.drawable.default_bg)
         }
 
         binding.etCustomCarrier.setText(appSettings.operatorText)

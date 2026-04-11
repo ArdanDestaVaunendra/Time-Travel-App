@@ -44,10 +44,6 @@ class EditLayoutActivity : AppCompatActivity() {
         binding = ActivityEditLayoutBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        window.setFlags(
-            WindowManager.LayoutParams.FLAG_SECURE,
-            WindowManager.LayoutParams.FLAG_SECURE
-        )
         prefManager = PreferenceManager(this)
 
         enforceImmersiveMode()
@@ -89,7 +85,10 @@ class EditLayoutActivity : AppCompatActivity() {
         binding.tvDateEdit,
         binding.tvOperatorEdit,
         binding.tvMarqueeEdit,
-        binding.statusBarEdit
+        binding.statusBarEdit,
+        binding.ivLockEdit,
+        binding.phoneButtonEdit,
+        binding.cameraButtonEdit
     )
 
     private fun applyExactDefaultsFromFakeLayout() {
@@ -105,6 +104,9 @@ class EditLayoutActivity : AppCompatActivity() {
         val tvTicker = fakeRoot.findViewById<View>(R.id.tvTicker)
         val tvMarquee = fakeRoot.findViewById<View>(R.id.tvMarqueeBottom)
         val statusBar = fakeRoot.findViewById<View>(R.id.statusBarContainer)
+        val ivLock = fakeRoot.findViewById<View>(R.id.ivLock)
+        val bgPhone = fakeRoot.findViewById<View>(R.id.bgPhone)
+        val bgCamera = fakeRoot.findViewById<View>(R.id.bgCamera)
 
         binding.tvClockEdit.x = tvBigClock.x
         binding.tvClockEdit.y = tvBigClock.y
@@ -120,6 +122,15 @@ class EditLayoutActivity : AppCompatActivity() {
 
         binding.statusBarEdit.x = statusBar.x
         binding.statusBarEdit.y = statusBar.y
+
+        binding.ivLockEdit.x = ivLock.x
+        binding.ivLockEdit.y = ivLock.y
+
+        binding.phoneButtonEdit.x = bgPhone.x
+        binding.phoneButtonEdit.y = bgPhone.y
+
+        binding.cameraButtonEdit.x = bgCamera.x
+        binding.cameraButtonEdit.y = bgCamera.y
     }
 
     private fun applyLockscreenLikeDefaults() {
@@ -156,6 +167,9 @@ class EditLayoutActivity : AppCompatActivity() {
         drag.attach(binding.tvClockEdit, SnapArea.CENTER)
         drag.attach(binding.tvDateEdit, SnapArea.CENTER)
         drag.attach(binding.tvMarqueeEdit, SnapArea.CENTER)
+        drag.attach(binding.ivLockEdit, SnapArea.CENTER)
+        drag.attach(binding.phoneButtonEdit, SnapArea.CENTER)
+        drag.attach(binding.cameraButtonEdit, SnapArea.CENTER)
 
         editableViews().forEach { v ->
             v.setOnClickListener { onEditableTapped(v) }
@@ -187,7 +201,7 @@ class EditLayoutActivity : AppCompatActivity() {
         button.setOnTouchListener { v, e ->
             when (e.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
-                    nudgeActive(dx, dy) // sekali langsung
+                    nudgeActive(dx, dy)
                     holdRunnable = object : Runnable {
                         override fun run() {
                             nudgeActive(dx, dy)
@@ -261,10 +275,12 @@ class EditLayoutActivity : AppCompatActivity() {
             date = Pos(binding.tvDateEdit.x, binding.tvDateEdit.y, binding.tvDateEdit.scaleX),
             operator = Pos(binding.tvOperatorEdit.x, binding.tvOperatorEdit.y, binding.tvOperatorEdit.scaleX),
             marquee = Pos(binding.tvMarqueeEdit.x, binding.tvMarqueeEdit.y, binding.tvMarqueeEdit.scaleX),
-            statusBar = Pos(binding.statusBarEdit.x, binding.statusBarEdit.y, binding.statusBarEdit.scaleX)
+            statusBar = Pos(binding.statusBarEdit.x, binding.statusBarEdit.y, binding.statusBarEdit.scaleX),
+            lockIcon = Pos(binding.ivLockEdit.x, binding.ivLockEdit.y, binding.ivLockEdit.scaleX),
+            phoneButton = Pos(binding.phoneButtonEdit.x, binding.phoneButtonEdit.y, binding.phoneButtonEdit.scaleX),
+            cameraButton = Pos(binding.cameraButtonEdit.x, binding.cameraButtonEdit.y, binding.cameraButtonEdit.scaleX)
         )
     }
-
     private fun applyConfig(c: LayoutConfig) {
         binding.tvClockEdit.x = c.clock.x
         binding.tvClockEdit.y = c.clock.y
@@ -290,6 +306,27 @@ class EditLayoutActivity : AppCompatActivity() {
         binding.statusBarEdit.y = c.statusBar.y
         binding.statusBarEdit.scaleX = c.statusBar.scale
         binding.statusBarEdit.scaleY = c.statusBar.scale
+
+        c.lockIcon?.let {
+            binding.ivLockEdit.x = it.x
+            binding.ivLockEdit.y = it.y
+            binding.ivLockEdit.scaleX = it.scale
+            binding.ivLockEdit.scaleY = it.scale
+        }
+
+        c.phoneButton?.let {
+            binding.phoneButtonEdit.x = it.x
+            binding.phoneButtonEdit.y = it.y
+            binding.phoneButtonEdit.scaleX = it.scale
+            binding.phoneButtonEdit.scaleY = it.scale
+        }
+
+        c.cameraButton?.let {
+            binding.cameraButtonEdit.x = it.x
+            binding.cameraButtonEdit.y = it.y
+            binding.cameraButtonEdit.scaleX = it.scale
+            binding.cameraButtonEdit.scaleY = it.scale
+        }
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -308,8 +345,17 @@ class EditLayoutActivity : AppCompatActivity() {
     private fun loadWallpaperPreview() {
         val appSettings = prefManager.getActiveSession()
         val uri = appSettings.wallpaperPath
+
         if (!uri.isNullOrBlank()) {
-            runCatching { binding.imgWallpaperEdit.setImageURI(Uri.parse(uri)) }
+            val ok = runCatching {
+                binding.imgWallpaperEdit.setImageURI(Uri.parse(uri))
+            }.isSuccess
+
+            if (!ok) {
+                binding.imgWallpaperEdit.setImageResource(R.drawable.default_bg)
+            }
+        } else {
+            binding.imgWallpaperEdit.setImageResource(R.drawable.default_bg)
         }
     }
 
@@ -581,7 +627,16 @@ class EditLayoutActivity : AppCompatActivity() {
                 samePos(a.date, b.date) &&
                 samePos(a.operator, b.operator) &&
                 samePos(a.marquee, b.marquee) &&
-                samePos(a.statusBar, b.statusBar)
+                samePos(a.statusBar, b.statusBar) &&
+                samePosNullable(a.lockIcon, b.lockIcon) &&
+                samePosNullable(a.phoneButton, b.phoneButton) &&
+                samePosNullable(a.cameraButton, b.cameraButton)
+    }
+
+    private fun samePosNullable(a: Pos?, b: Pos?): Boolean {
+        if (a == null && b == null) return true
+        if (a == null || b == null) return false
+        return samePos(a, b)
     }
 
     private fun samePos(a: Pos, b: Pos): Boolean {
