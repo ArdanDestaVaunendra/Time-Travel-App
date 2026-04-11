@@ -17,6 +17,10 @@ import androidx.activity.OnBackPressedCallback
 import android.os.Handler
 import android.os.Looper
 import android.view.MotionEvent
+import kotlin.text.get
+import kotlin.text.set
+import kotlin.text.toInt
+import kotlin.times
 
 class EditLayoutActivity : AppCompatActivity() {
 
@@ -36,6 +40,7 @@ class EditLayoutActivity : AppCompatActivity() {
     private val holdStartDelayMs = 2000L
     private val holdRepeatMs = 40L
     private val defaultPos = mutableMapOf<Int, PointF>()
+    private val defaultScale = mutableMapOf<Int, Float>()
     private var isCardRaised = false
     private var raisedTranslationY = 0f
 
@@ -250,8 +255,11 @@ class EditLayoutActivity : AppCompatActivity() {
     }
 
     private fun captureDefaultsIfNeeded() {
-        if (defaultPos.isNotEmpty()) return
-        editableViews().forEach { v -> defaultPos[v.id] = PointF(v.x, v.y) }
+        if (defaultPos.isNotEmpty() && defaultScale.isNotEmpty()) return
+        editableViews().forEach { v ->
+            defaultPos[v.id] = PointF(v.x, v.y)
+            defaultScale[v.id] = v.scaleX
+        }
     }
 
     private fun applyDefaults() {
@@ -260,6 +268,19 @@ class EditLayoutActivity : AppCompatActivity() {
                 v.x = p.x
                 v.y = p.y
             }
+            val s = defaultScale[v.id] ?: 1f
+            v.scaleX = s
+            v.scaleY = s
+        }
+
+        activeView?.let { v ->
+            moveActiveIndicator(v)
+            val percent = (v.scaleX * 100f).toInt().coerceIn(minScalePercent, maxScalePercent)
+            binding.etScalePercent.setText(percent.toString())
+            binding.seekScale.progress = percent - minScalePercent
+        } ?: run {
+            binding.etScalePercent.setText("100")
+            binding.seekScale.progress = 100 - minScalePercent
         }
     }
 
