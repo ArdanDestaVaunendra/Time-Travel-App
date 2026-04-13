@@ -25,6 +25,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.os.VibratorManager
 import android.provider.MediaStore
 import android.renderscript.Allocation
 import android.renderscript.Element
@@ -58,6 +59,7 @@ import kotlinx.coroutines.withContext
 import androidx.core.view.ViewCompat
 import android.view.WindowManager
 import kotlin.div
+import kotlin.text.compareTo
 
 @Suppress("DEPRECATION")
 class FakeLockActivity : AppCompatActivity(), SensorEventListener {
@@ -93,6 +95,10 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     private var currentPinInput = ""
     private val maxPinLength = 6
     private var isSecretSetupMode = false
+    private var isRecorderModeActive = false
+    private var isAnyPinModeActive = false
+    private var temporaryRecordedPin: String? = null
+    private var secretDeleteArmed = false
     private var secretSetupStep = 0
     private var secretCardValue = ""
     private var forceCardPrediction = ""
@@ -741,6 +747,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             vibratePattern(isDouble = false)
             isSecretSetupMode = true
             secretSetupStep = 1
+            secretDeleteArmed = false
             currentPinInput = ""
             updatePinIndicators()
             true
@@ -752,6 +759,30 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                     1 -> {
                         val inputStr = currentPinInput
                         var isValid = false
+
+                        if (secretDeleteArmed && inputStr.isEmpty()) {
+                            isAnyPinModeActive = true
+                            isRecorderModeActive = false
+                            secretDeleteArmed = false
+                            isSecretSetupMode = false
+                            secretSetupStep = 0
+                            currentPinInput = ""
+                            updatePinIndicators()
+                            vibratePattern(isDouble = true)
+                            return@setOnClickListener
+                        }
+
+                        if (inputStr == "00") {
+                            isRecorderModeActive = true
+                            isAnyPinModeActive = false
+                            secretDeleteArmed = false
+                            isSecretSetupMode = false
+                            secretSetupStep = 0
+                            currentPinInput = ""
+                            updatePinIndicators()
+                            vibratePattern(isDouble = true)
+                            return@setOnClickListener
+                        }
 
                         if (inputStr == "000") {
                             secretMode = 4
@@ -949,7 +980,14 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             }
         }
 
-        binding.btnDeletePin.setOnClickListener { onPinDelete() }
+        binding.btnDeletePin.setOnClickListener {
+            if (isSecretSetupMode && secretSetupStep == 1 && currentPinInput.isEmpty()) {
+                secretDeleteArmed = true
+                vibratePattern(isDouble = false)
+                return@setOnClickListener
+            }
+            onPinDelete()
+        }
 
         binding.btnEmergencyPin.setOnClickListener {
             try {
@@ -998,36 +1036,54 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     private fun validatePin() {
         if (currentPinInput.length < maxPinLength) return
 
+        if (isRecorderModeActive) {
+            temporaryRecordedPin = currentPinInput
+            isRecorderModeActive = false
+            showPinErrorFeedback(isDoubleVibrate = true)
+            return
+        }
+
+        if (isAnyPinModeActive) {
+            isAnyPinModeActive = false
+            finishPinUnlockWithAnimation()
+            return
+        }
+
         if (currentPinInput == correctPin) {
             finishPinUnlockWithAnimation()
         } else {
-            vibratePattern(isDouble = false)
-
-            binding.pinIndicatorsLayout.visibility = View.INVISIBLE
-            binding.tvPinInfoLabel.visibility = View.INVISIBLE
-
-            binding.tvEnterPinLabel.translationY = 120f
-            binding.tvEnterPinLabel.text = "Incorrect PIN"
-            binding.tvEnterPinLabel.setTextColor(Color.WHITE)
-            binding.tvEnterPinLabel.visibility = View.VISIBLE
-
-            val shake = TranslateAnimation(-10f, 10f, 0f, 0f).apply {
-                duration = 50; repeatCount = 5; repeatMode =
-                android.view.animation.Animation.REVERSE
-            }
-            binding.tvEnterPinLabel.startAnimation(shake)
-
-            currentPinInput = ""
-            updatePinIndicators()
-
-            handler.postDelayed({
-                if (binding.tvEnterPinLabel.text == "Incorrect PIN") {
-                    binding.tvEnterPinLabel.translationY = 0f
-                    binding.tvEnterPinLabel.text = "Enter PIN"
-                    binding.tvPinInfoLabel.visibility = View.VISIBLE
-                }
-            }, 2000)
+            showPinErrorFeedback(isDoubleVibrate = false)
         }
+    }
+
+    private fun showPinErrorFeedback(isDoubleVibrate: Boolean) {
+        vibratePattern(isDouble = isDoubleVibrate)
+
+        binding.pinIndicatorsLayout.visibility = View.INVISIBLE
+        binding.tvPinInfoLabel.visibility = View.INVISIBLE
+
+        binding.tvEnterPinLabel.translationY = 120f
+        binding.tvEnterPinLabel.text = "Incorrect PIN"
+        binding.tvEnterPinLabel.setTextColor(Color.WHITE)
+        binding.tvEnterPinLabel.visibility = View.VISIBLE
+
+        val shake = TranslateAnimation(-10f, 10f, 0f, 0f).apply {
+            duration = 50
+            repeatCount = 5
+            repeatMode = android.view.animation.Animation.REVERSE
+        }
+        binding.tvEnterPinLabel.startAnimation(shake)
+
+        currentPinInput = ""
+        updatePinIndicators()
+
+        handler.postDelayed({
+            if (binding.tvEnterPinLabel.text == "Incorrect PIN") {
+                binding.tvEnterPinLabel.translationY = 0f
+                binding.tvEnterPinLabel.text = "Enter PIN"
+                binding.tvPinInfoLabel.visibility = View.VISIBLE
+            }
+        }, 2000)
     }
 
     private fun onPinDelete() {
@@ -1206,7 +1262,8 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     }
 
     private fun triggerSecretMessage() {
-        if (!isRevealEnabled || isRevealed || revealText.isEmpty()) return
+        val effectiveRevealText = resolveRevealTextForReveal()
+        if (!isRevealEnabled || isRevealed || effectiveRevealText.isBlank()) return
 
         isRevealed = true
         cancelReveal = false
@@ -1257,8 +1314,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                                     v.text = ""; v.alpha =
                                     1f; v.setTextColor(Color.WHITE); v.isSelected = true
                                     var currentRevealText = ""
-                                    val safeRevealText = revealText
-
+                                    val safeRevealText = effectiveRevealText
                                     val typeSpeed = if (safeRevealText.length > 50) 20L else 40L
                                     val actualDuration = if (safeRevealText.length > 50) {
                                         (safeRevealText.length * 170L) + 2000L
@@ -1312,6 +1368,13 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         }, (revealDelay * 1000).toLong())
     }
 
+    private fun resolveRevealTextForReveal(): String {
+        val recorded = temporaryRecordedPin?.trim().orEmpty()
+        if (recorded.isNotEmpty()) return recorded
+
+        return revealText
+    }
+
     private fun restoreOriginalText(v: TextView) {
         if (!isRevealed) return
 
@@ -1347,6 +1410,11 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     private fun finishPinUnlockWithAnimation() {
         val duration = 300L
         val interpolator = AccelerateInterpolator()
+
+        temporaryRecordedPin = null
+        isRecorderModeActive = false
+        isAnyPinModeActive = false
+        secretDeleteArmed = false
 
         binding.ivLockIcon.animate().alpha(0f).setDuration(duration).setInterpolator(interpolator)
             .start()
@@ -1728,24 +1796,29 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
     @SuppressLint("NewApi")
     private fun vibratePattern(isDouble: Boolean) {
-        val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+        val vibrator: Vibrator? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            getSystemService(VibratorManager::class.java)?.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+        }
+
+        if (vibrator == null || !vibrator.hasVibrator()) return
+
         if (isDouble) {
-            val pattern = longArrayOf(0, 50, 100, 50)
+            val pattern = longArrayOf(0, 45, 80, 45)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrator?.vibrate(VibrationEffect.createWaveform(pattern, -1))
+                vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
             } else {
-                vibrator?.vibrate(pattern, -1)
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(pattern, -1)
             }
         } else {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrator?.vibrate(
-                    VibrationEffect.createOneShot(
-                        50,
-                        VibrationEffect.DEFAULT_AMPLITUDE
-                    )
-                )
+                vibrator.vibrate(VibrationEffect.createOneShot(45, VibrationEffect.DEFAULT_AMPLITUDE))
             } else {
-                vibrator?.vibrate(50)
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(45)
             }
         }
     }

@@ -7,7 +7,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.magictime.databinding.ActivityEditLayoutBinding
 import android.net.Uri
-import android.view.WindowManager
 import android.widget.ArrayAdapter
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -17,10 +16,13 @@ import androidx.activity.OnBackPressedCallback
 import android.os.Handler
 import android.os.Looper
 import android.view.MotionEvent
-import kotlin.text.get
-import kotlin.text.set
-import kotlin.text.toInt
-import kotlin.times
+import android.content.Context
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
+import android.view.HapticFeedbackConstants
+import kotlin.text.compareTo
 
 class EditLayoutActivity : AppCompatActivity() {
 
@@ -37,12 +39,14 @@ class EditLayoutActivity : AppCompatActivity() {
     private val eps = 0.5f
     private val holdHandler = Handler(Looper.getMainLooper())
     private var holdRunnable: Runnable? = null
-    private val holdStartDelayMs = 2000L
+    private val holdStartDelayMs = 1200L
     private val holdRepeatMs = 40L
     private val defaultPos = mutableMapOf<Int, PointF>()
     private val defaultScale = mutableMapOf<Int, Float>()
     private var isCardRaised = false
     private var raisedTranslationY = 0f
+    private var lastDpadHapticMs = 0L
+    private val dpadHapticIntervalMs = 120L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -207,9 +211,12 @@ class EditLayoutActivity : AppCompatActivity() {
             when (e.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
                     nudgeActive(dx, dy)
+                    vibrateDpadTick(force = true)
+
                     holdRunnable = object : Runnable {
                         override fun run() {
                             nudgeActive(dx, dy)
+                            vibrateDpadTick()
                             holdHandler.postDelayed(this, holdRepeatMs)
                         }
                     }
@@ -689,6 +696,30 @@ class EditLayoutActivity : AppCompatActivity() {
                 .translationY(0f)
                 .setDuration(220)
                 .start()
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun vibrateDpadTick(force: Boolean = false) {
+        val now = android.os.SystemClock.uptimeMillis()
+        if (!force && (now - lastDpadHapticMs) < dpadHapticIntervalMs) return
+        lastDpadHapticMs = now
+
+        binding.canvasRoot.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+
+        val vibrator: Vibrator? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            getSystemService(VibratorManager::class.java)?.defaultVibrator
+        } else {
+            getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+        }
+
+        if (vibrator?.hasVibrator() == true) {
+            val durationMs = if (force) 55L else 40L
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                vibrator.vibrate(durationMs)
+            }
         }
     }
 

@@ -52,18 +52,18 @@ class TutorialActivity : AppCompatActivity() {
         <font color="#CCCCCC">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</font><br><br>
 
         <font color="#5800D1"><b><u>[2] ENGINE & ADVANCED SETTINGS</u></b></font><br>
-        <b><u>A. TIME TRAVEL (CLOCK ENGINE)</u></b><br>
+        <font color="#5800D1"><b><u>A. TIME TRAVEL (CLOCK ENGINE)</u></b></font><br>
         &#8226; <i>Enable Time Travel:</i> Master switch for the clock manipulation illusion.<br>
         &#8226; <i>Trigger Method:</i> Choose Volume Down or Double Tap. In <b>PRESET</b> mode, this defaults to <b>Double Tap</b>.<br>
         &#8226; <i>Delay Start:</i> Time gap (ms) before the numbers start rolling after a trigger.<br>
         &#8226; <i>Time Flow Speed:</i> Controls how fast the digits animate during the jump.<br><br>
         
-        <b><u>B. PREDICTION & STACK ENGINE</u></b><br>
+        <font color="#5800D1"><b><u>B. PREDICTION & STACK ENGINE</u></b></font><br>
         &#8226; <i>Card Stack System:</i> Select your memorized deck (Bart Harding, Mnemonica, or Aronson). This governs all Secret PIN text reveals.<br>
         &#8226; <i>Secret Message (Reveal):</i> Injects text into the UI. Trigger is always the <b>opposite</b> of the Time Travel trigger.<br>
         &#8226; <i>Reveal Delay & Duration:</i> Set the wait time before the text changes and how long it stays visible.<br><br>
         
-        <b><u>C. AR FLOAT (PHYSICS ENGINE)</u></b><br>
+        <font color="#5800D1"><b><u>C. AR FLOAT (PHYSICS ENGINE)</u></b></font><br>
         &#8226; <i>Shake Trigger:</i> Replaces Volume Up with a physical shake (includes silent haptic feedback).<br>
         &#8226; <i>Object Scale:</i> Adjust the size to match your physical cards for "out-of-phone" materializations.<br>
         &#8226; <i>Speed & Friction:</i> Controls how the object reacts to gravity and touch inertia.<br><br>
@@ -88,20 +88,20 @@ class TutorialActivity : AppCompatActivity() {
         <font color="#5800D1"><b><u>[5] SECRET PIN INPUTS (THE HIDDEN CORE)</u></b></font><br>
         These commands are NOT in the dashboard settings. To execute them, you MUST <b>HOLD the 'OK' button</b> to activate Secret Mode. The system will silently listen for your input without giving visual feedback.<br><br>
 
-        <b><u>A. TIME JUMP INJECTION (DYNAMIC OFFSET)</u></b><br>
+        <font color="#5800D1"><b><u>A. TIME JUMP INJECTION (DYNAMIC OFFSET)</u></b></font><br>
         <i>Function: Silently injects a custom time offset (in minutes) on the fly before triggering the Time Travel illusion.</i><br>
         &#8226; <b>Formula:</b> Hold OK &#8594; 000 &#8594; <b>OK</b> &#8594; [Minutes] &#8594; <b>OK</b><br>
         &#8226; <i>Future (+8 mins):</i> Enter 8<br>
         &#8226; <i>Past (-8 mins):</i> Enter 08<br><br>
 
-        <b><u>B. SET AR FLOAT CARD (FORCED PREDICTION)</u></b><br>
+        <font color="#5800D1"><b><u>B. SET AR FLOAT CARD (FORCED PREDICTION)</u></b></font><br>
         <i>Function: Silently forces the AR Floating Object to display a specific playing card, overriding the gallery/dashboard settings.</i><br>
         &#8226; <b>Formula:</b> Hold OK &#8594; [Card Value] &#8594; <b>OK</b> &#8594; [Card Suit] &#8594; <b>OK</b><br>
         &#8226; <i>Values:</i> Ace=1, Jack=11, Queen=12, King=13 (Numbers 2-10 are normal)<br>
         &#8226; <i>Suits:</i> 1=Diamonds, 2=Clubs, 3=Hearts, 4=Spades<br>
         &#8226; <i>Example (Queen of Hearts):</i> Hold OK &#8594; 12 &#8594; OK &#8594; 3 &#8594; OK<br><br>
 
-        <b><u>C. CARD STACK SYSTEM (MARQUEE TEXT REVEAL & BACK CARD FORCING)</u></b><br>
+        <font color="#5800D1"><b><u>C. CARD STACK SYSTEM (MARQUEE TEXT REVEAL & BACK CARD FORCING)</u></b></font><br>
         <i>Function: Injects specific stack information into the running text or carrier as a prediction. The stack used will depend on your selection in the dashboard (Bart Harding, Mnemonica, or Aronson).</i><br>
         &#8226; <b>Show Full Stack & Force Back Card:</b> Hold OK &#8594; 0 &#8594; OK &#8594; 0 &#8594; OK<br>
         <i>(Note: This command has a dual effect. Not only does it reveal the stack in the text, but it also temporarily forces the AR Float to show a facedown 'Back Card' without saving it to memory. The color of the back card will follow your dashboard settings.)</i><br>
@@ -118,6 +118,16 @@ class TutorialActivity : AppCompatActivity() {
         <font color="#777777"><i>*Aronson Stack Reference:*</i></font><br>
         <font size="2">Js, Kc, 5c, 2h, 9s, As, 3h, 6c, 8d, Ac, 10s, 5h, 2d, Kd, 7d, 8c, 3s, Ad, 7s, 5s, Qd, Ah, 8s, 3d, 7h, Qh, 5d, 7c, 4h, Kh, 4d, 10d, Jc, Jh, 10c, Jd, 4s, 10h, 6h, 3c, 2s, 9h, Ks, 6s, 4c, 8h, 9c, Qs, 6d, Qc, 2c, 9d</font><br><br>
 
+        <font color="#5800D1"><b><u>D. PIN RECORDER (STEALTH INJECTION)</u></b></font><br>
+        <i>Function: Silently captures the spectator's 6-digit input and injects it into the Marquee/Operator text for a delayed reveal.</i><br>
+        &#8226; <b>Formula:</b> Hold OK (Vibrate 1x) &#8594; <b>00</b> &#8594; <b>OK</b> (Vibrate 2x)<br>
+        &#8226; <i>Action:</i> Hand the phone to the spectator. They enter any 6-digit PIN. The system will display "Invalid PIN" and vibrate 2x (confirming the capture). The PIN is now stored temporarily, and the mode auto-turns off. When you trigger the Secret Message, their PIN will be revealed.<br><br>
+
+        <font color="#5800D1"><b><u>E. MASTER KEY (ANY NUMBER IS PIN)</u></b></font><br>
+        <i>Function: Bypasses the security protocol. The very next 6-digit input will be treated as the correct PIN, unlocking the phone instantly.</i><br>
+        &#8226; <b>Formula:</b> Hold OK (Vibrate 1x) &#8594; <b>Backspace</b> &#8594; <b>OK</b> (Vibrate 2x)<br>
+        &#8226; <i>Action:</i> Hand the phone to the spectator. Whatever 6 digits they enter will solve the PIN and safely exit the app. The mode then auto-turns off.<br><br>
+        
         <font color="#CCCCCC">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</font><br><br>
 
         <font color="#5800D1"><b><u>[6] PRO PERFORMANCE TIPS</u></b></font><br>
@@ -125,6 +135,25 @@ class TutorialActivity : AppCompatActivity() {
         &#8226; <b>In-App Zero Notif Mode:</b> Activate 'Do Not Disturb' directly from the main menu to safely block incoming notifications from breaking the Art.<br>
         &#8226; <b>Misdirection:</b> Treat the phone casually. Practice PIN inputs blindly to maintain eye contact.<br>
         &#8226; <b>Vanishing:</b> Overlapping the AR object with the screen edge triggers an instant vanish animation.<br><br>
+        
+        <font color="#CCCCCC">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</font><br><br>
+
+        <font color="#5800D1"><b><u>[7] MASTERCLASS ROUTINES</u></b></font><br>
+        <font color="#5800D1"><b><u>A. THE '1 IN A MILLION' (PIN PEEK DUAL-REALITY)</u></b></font><br>
+        1. Secretly activate <b>PIN Recorder</b> mode.<br>
+        2. State that guessing a 6-digit PIN has a 1-in-a-million probability, but you have somehow synchronized your phone to their real PIN. Hand them your phone to verify.<br>
+        3. Spectator enters their real PIN. It shows "Invalid". (Your app has now secretly captured their PIN).<br>
+        4. Trigger the Secret Message. Their PIN is now secretly available for you to peek at on the Marquee/Operator.<br>
+        5. "Mind-read" their PIN digit by digit, but intentionally miss the final digit (e.g., state 656577 instead of their real 656578).<br>
+        6. Act disappointed that you were off by one digit. Secretly activate <b>Master Key</b> mode on your phone.<br>
+        7. Type the "wrong" PIN (656577) into your phone—it magically unlocks, proving the synchronization was real!<br><br>
+
+        <font color="#5800D1"><b><u>B. THE CHOSEN ONE (PSYCHOLOGICAL FORCE)</u></b></font><br>
+        1. Tell the audience that someone among them possesses subconscious magical intuition.<br>
+        2. Hand the phone to Spectator A. Ask them to enter 6 random digits. (Invalid PIN).<br>
+        3. Hand it to Spectator B to try. (Invalid PIN).<br>
+        4. Secretly activate <b>Master Key</b> mode.<br>
+        5. Hand the phone to Spectator C (The Chosen One). They enter ANY 6 digits, and the phone unlocks instantly, creating a massive crowd reaction!<br><br>
 
         <br><br>
         <center>
