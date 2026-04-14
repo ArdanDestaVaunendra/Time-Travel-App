@@ -104,8 +104,8 @@
 
         <TextView
             android:id="@+id/tvBatteryLevel"
-            android:layout_width="22dp"
-            android:layout_height="wrap_content"
+            android:layout_width="24dp"
+            android:layout_height="16dp"
             android:background="@drawable/bg_battery_dynamic"
             android:fontFamily="@font/samsung_one_400"
             android:gravity="center"
@@ -196,8 +196,8 @@
 
     <View
         android:id="@+id/bgPhone"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
         android:layout_marginStart="32dp"
         android:layout_marginBottom="32dp"
         android:background="@drawable/bg_circle_translucent"
@@ -206,8 +206,8 @@
 
     <ImageView
         android:id="@+id/ivPhone"
-        android:layout_width="63dp"
-        android:layout_height="61dp"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
         android:src="@drawable/ic_phone"
         app:layout_constraintBottom_toBottomOf="@id/bgPhone"
         app:layout_constraintEnd_toEndOf="@id/bgPhone"
@@ -216,8 +216,8 @@
 
     <View
         android:id="@+id/bgCamera"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
         android:layout_marginEnd="32dp"
         android:layout_marginBottom="32dp"
         android:background="@drawable/bg_circle_translucent"
@@ -226,8 +226,8 @@
 
     <ImageView
         android:id="@+id/ivCamera"
-        android:layout_width="60dp"
-        android:layout_height="61dp"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
         android:src="@drawable/ic_camera"
         app:layout_constraintBottom_toBottomOf="@id/bgCamera"
         app:layout_constraintEnd_toEndOf="@id/bgCamera"

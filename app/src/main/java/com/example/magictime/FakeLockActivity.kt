@@ -140,22 +140,26 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
                 if (level != -1 && scale != -1) {
                     val batteryPct = (level * 100 / scale.toFloat()).toInt()
-
                     binding.tvBatteryLevel.text = "$batteryPct"
 
+                    val styleRes = (binding.tvBatteryLevel.tag as? Int) ?: R.drawable.bg_battery_dynamic
                     val bgDrawable = binding.tvBatteryLevel.background
-                    bgDrawable.setLevel(batteryPct * 100)
 
-                    val fillColor = if (batteryPct <= 15) Color.RED else Color.WHITE
+                    if (styleRes == R.drawable.bg_battery_dynamic) {
+                        bgDrawable?.level = batteryPct * 100
 
-                    if (bgDrawable is android.graphics.drawable.LayerDrawable) {
-                        val progressLayer = bgDrawable.findDrawableByLayerId(android.R.id.progress)
-                        progressLayer?.setTint(fillColor)
+                        val fillColor = if (batteryPct <= 15) Color.RED else Color.WHITE
+                        if (bgDrawable is android.graphics.drawable.LayerDrawable) {
+                            val progressLayer = bgDrawable.findDrawableByLayerId(android.R.id.progress)
+                            progressLayer?.setTint(fillColor)
+                        } else {
+                            bgDrawable?.setTint(fillColor)
+                        }
+
+                        binding.tvBatteryLevel.setTextColor(Color.BLACK)
                     } else {
-                        bgDrawable.setTint(fillColor)
+                        binding.tvBatteryLevel.setTextColor(Color.WHITE)
                     }
-
-                    binding.tvBatteryLevel.setTextColor(Color.BLACK)
                 }
             }
         }

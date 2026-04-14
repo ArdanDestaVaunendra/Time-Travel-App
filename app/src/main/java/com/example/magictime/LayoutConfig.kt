@@ -14,5 +14,15 @@ data class LayoutConfig(
     var date: Pos = Pos(),
     var lockIcon: Pos? = null,
     var phoneButton: Pos? = null,
-    var cameraButton: Pos? = null
+    var cameraButton: Pos? = null,
+    var cameraIconRes: Int = 0,
+    var phoneIconRes: Int = 0,
+    var lockIconRes: Int = 0,
+    var statusBarPackRes: Int = 0,
+    var batteryStyleRes: Int = 0,
+    var clockFontRes: Int = 0,
+    var textFontRes: Int = 0,
+    var dateFontRes: Int = 0,
+    var operatorFontRes: Int = 0,
+    var marqueeFontRes: Int = 0
 )

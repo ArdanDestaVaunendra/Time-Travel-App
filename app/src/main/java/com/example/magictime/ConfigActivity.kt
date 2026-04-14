@@ -15,9 +15,15 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.activity.OnBackPressedCallback
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.example.magictime.databinding.ActivityConfigBinding
 import com.google.android.gms.ads.MobileAds
 import kotlin.apply
+import kotlin.collections.remove
+import kotlin.div
+import kotlin.text.toInt
+import kotlin.times
 import kotlin.toString
 
 class ConfigActivity : AppCompatActivity() {
@@ -34,6 +40,11 @@ class ConfigActivity : AppCompatActivity() {
     private var currentFloatDelay = 0
     private lateinit var prefManager: PreferenceManager
     private lateinit var appSettings: AppSettings
+    private lateinit var committedSettings: AppSettings
+    private var committedCustomPin: String = Defaults.PIN
+    private var committedFloatDelay: Int = 0
+    private var committedIsGalleryMode: Boolean = false
+    private var committedFloatSpeedMode: String = "MEDIUM"
 
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
@@ -66,8 +77,17 @@ class ConfigActivity : AppCompatActivity() {
         }
 
         binding.btnBack.setOnClickListener {
-            finish()
+            showExitAdvancedDialog()
         }
+
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    showExitAdvancedDialog()
+                }
+            }
+        )
 
         binding.btnConfigInfo.setOnClickListener {
             showAdvancedHelpDialog()
@@ -281,15 +301,10 @@ class ConfigActivity : AppCompatActivity() {
         }
 
         binding.btnSaveAdvanced.setOnClickListener {
-            saveFloatSettings()
-            saveSettings()
-
-            appSettings.currentStatusMode = "CUSTOM"
-            prefManager.saveActiveSession(appSettings)
-
-            android.widget.Toast.makeText(this, "Advanced Settings Saved!", android.widget.Toast.LENGTH_SHORT).show()
-            finish()
+            saveAdvancedAndExit()
         }
+
+        captureCommittedSnapshot()
     }
 
     override fun onPause() {
@@ -669,6 +684,172 @@ class ConfigActivity : AppCompatActivity() {
         binding.imgDynamicFloatPreview.layoutParams = params
 
         binding.imgDynamicFloatPreview.requestLayout()
+    }
+
+    private fun saveAdvancedAndExit() {
+        saveFloatSettings()
+        saveSettings()
+
+        appSettings.currentStatusMode = "CUSTOM"
+        prefManager.saveActiveSession(appSettings)
+
+        captureCommittedSnapshot()
+
+        android.widget.Toast.makeText(this, "Advanced Settings Saved!", android.widget.Toast.LENGTH_SHORT).show()
+        finish()
+    }
+
+    private fun showExitAdvancedDialog() {
+        val hasChanges = hasUnsavedChanges()
+
+        if (!hasChanges) {
+            MaterialAlertDialogBuilder(this)
+                .setTitle("Exit Advanced")
+                .setMessage("No unsaved changes.")
+                .setPositiveButton("Exit") { _, _ -> finish() }
+                .setNegativeButton("Cancel", null)
+                .show()
+            return
+        }
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Exit Advanced")
+            .setMessage("Save settings before exit?")
+            .setPositiveButton("Save") { _, _ ->
+                saveAdvancedAndExit()
+            }
+            .setNeutralButton("Don't Save") { _, _ ->
+                restoreCommittedSnapshot()
+                finish()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun captureCommittedSnapshot() {
+        committedSettings = prefManager.getActiveSession().copy()
+        committedCustomPin = prefs.getString("CUSTOM_PIN", Defaults.PIN) ?: Defaults.PIN
+
+        val floatPrefs = getSharedPreferences("MagicTimePrefs", MODE_PRIVATE)
+        committedFloatDelay = floatPrefs.getInt("FLOAT_DELAY", 0)
+        committedIsGalleryMode = floatPrefs.getBoolean("IS_GALLERY_MODE", false)
+        committedFloatSpeedMode = floatPrefs.getString("FLOAT_SPEED_MODE", "MEDIUM") ?: "MEDIUM"
+    }
+
+    private fun hasUnsavedChanges(): Boolean {
+        val currentDraft = buildDraftSettingsFromUi()
+
+        if (currentDraft != committedSettings) return true
+
+        val currentPin = binding.etCustomPin.text.toString().ifBlank { Defaults.PIN }
+        if (currentPin != committedCustomPin) return true
+
+        if (currentFloatDelay != committedFloatDelay) return true
+        if (isUsingGalleryMode != committedIsGalleryMode) return true
+        if (currentFloatSpeedMode() != committedFloatSpeedMode) return true
+
+        return false
+    }
+
+    private fun buildDraftSettingsFromUi(): AppSettings {
+        val routines = mutableSetOf<String>()
+        if (binding.switchTimeTravel.isChecked) routines.add("TIMEJUMP")
+        if (binding.switchEnableReveal.isChecked) routines.add("PREDICTION")
+        if (binding.switchFloatEffect.isChecked) routines.add("FLOAT")
+
+        val revealInput = binding.etRevealText.text.toString().trim().ifBlank { Defaults.REVEAL_TEXT }
+
+        return committedSettings.copy(
+            activeRoutines = routines,
+            timeJumpOffset = offsetMinutes,
+            globalDelay = delaySeconds * 1000L,
+            operatorText = binding.etCustomCarrier.text.toString(),
+            marqueeText = binding.etCustomMarquee.text.toString(),
+            showOperator = binding.switchShowCarrier.isChecked,
+            showRunningText = binding.switchShowMarquee.isChecked,
+            is24HourFormat = binding.rbFormat24.isChecked,
+            networkMode = buildNetworkMode(),
+            revealText = revealInput,
+            revealDelay = revealDelaySeconds,
+            predictionDuration = revealDurationSeconds * 1000L,
+            isPinEnabled = binding.switchEnablePin.isChecked,
+            dateLanguage = if (binding.rbLangEN.isChecked) "en" else "id",
+            predictionLanguage = if (binding.rbPredLangEN.isChecked) "en" else "id",
+            predictionTarget = when (binding.rgRevealTarget.checkedRadioButtonId) {
+                R.id.rbTargetCarrier -> "CARRIER"
+                R.id.rbTargetMarquee -> "MARQUEE"
+                else -> "BOTH"
+            },
+            timeFlowSpeed = when (binding.spinnerTimeSpeed.selectedItemPosition) {
+                0 -> 1.35f
+                1 -> 1.2f
+                2 -> 1.0f
+                3 -> 0.85f
+                4 -> 0.7f
+                5 -> 0.45f
+                6 -> 0.2f
+                else -> 1.0f
+            },
+            stackSystem = when (binding.spinnerStackSystem.selectedItemPosition) {
+                1 -> "Mnemonica"
+                2 -> "Aronson"
+                else -> "Bart Harding"
+            },
+            isVolumeTriggerForTime = binding.rbVolume.isChecked,
+            isShakeTriggerEnabled = binding.switchShakeTrigger.isChecked,
+            useRedCardBack = binding.switchRedCardBack.isChecked,
+            objectScale = binding.seekBarFloatSize.progress / 100f,
+            floatTargetCardPath = customImageUriString,
+            floatDelay = currentFloatDelay
+        )
+    }
+
+    private fun currentFloatSpeedMode(): String {
+        return when (binding.rgFloatSpeed.checkedRadioButtonId) {
+            R.id.rbSpeedSlow -> "SLOW"
+            R.id.rbSpeedFast -> "FAST"
+            else -> "MEDIUM"
+        }
+    }
+
+    private fun restoreCommittedSnapshot() {
+        appSettings = committedSettings.copy()
+        prefManager.saveActiveSession(appSettings)
+
+        prefs.edit().apply {
+            putBoolean("TRIGGER_VOLUME", committedSettings.isVolumeTriggerForTime)
+            putBoolean("SHOW_WIFI", committedSettings.networkMode.uppercase().contains("WIFI"))
+            putBoolean("USE_5G", committedSettings.networkMode.uppercase().contains("5G"))
+            putBoolean("SIM1_4G", committedSettings.networkMode.uppercase().contains("SIM1") || committedSettings.networkMode.uppercase().contains("DUAL") || !committedSettings.networkMode.uppercase().contains("WIFI"))
+            putBoolean("SIM2_4G", committedSettings.networkMode.uppercase().contains("SIM2") || committedSettings.networkMode.uppercase().contains("DUAL"))
+            putString("CUSTOM_CARRIER", committedSettings.operatorText)
+            putString("CUSTOM_MARQUEE", committedSettings.marqueeText)
+            putString("CUSTOM_PIN", committedCustomPin)
+            putInt("REVEAL_DURATION", (committedSettings.predictionDuration / 1000L).toInt())
+            putString("REVEAL_TEXT", committedSettings.revealText)
+            putInt("REVEAL_DELAY", committedSettings.revealDelay)
+            putBoolean("IS_24H", committedSettings.is24HourFormat)
+            putString("DATE_LANGUAGE", committedSettings.dateLanguage)
+            putFloat("TIME_SPEED", committedSettings.timeFlowSpeed)
+            putInt("SELECTED_STACK", when (committedSettings.stackSystem) {
+                "Mnemonica" -> 1
+                "Aronson" -> 2
+                else -> 0
+            })
+            if (committedSettings.wallpaperPath.isNullOrBlank()) {
+                remove("WALLPAPER_URI")
+            } else {
+                putString("WALLPAPER_URI", committedSettings.wallpaperPath)
+            }
+            apply()
+        }
+
+        getSharedPreferences("MagicTimePrefs", MODE_PRIVATE).edit().apply {
+            putInt("FLOAT_DELAY", committedFloatDelay)
+            putBoolean("IS_GALLERY_MODE", committedIsGalleryMode)
+            putString("FLOAT_SPEED_MODE", committedFloatSpeedMode)
+            apply()
+        }
     }
 
     private fun showCardSelectorDialog() {

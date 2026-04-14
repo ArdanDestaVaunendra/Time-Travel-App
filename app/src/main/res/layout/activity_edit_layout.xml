@@ -19,9 +19,9 @@
             android:id="@+id/imgWallpaperEdit"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:contentDescription="@null"
             android:scaleType="centerCrop"
-            android:src="@drawable/default_bg"
-            android:contentDescription="@null" />
+            android:src="@drawable/default_bg" />
 
         <TextView
             android:id="@+id/tvOperatorEdit"
@@ -53,11 +53,12 @@
             android:paddingEnd="27dp">
 
             <ImageView
+                android:id="@+id/ivWifiEdit"
                 android:layout_width="16dp"
                 android:layout_height="15dp"
                 android:layout_marginEnd="5dp"
-                android:src="@drawable/ic_wifi"
                 android:contentDescription="@null"
+                android:src="@drawable/ic_wifi"
                 app:tint="#FFFFFF" />
 
             <LinearLayout
@@ -68,18 +69,20 @@
                 android:orientation="horizontal">
 
                 <ImageView
+                    android:id="@+id/ivSim1TypeEdit"
                     android:layout_width="12dp"
                     android:layout_height="14dp"
                     android:layout_marginEnd="2dp"
-                    android:src="@drawable/ic_4g"
                     android:contentDescription="@null"
+                    android:src="@drawable/ic_4g"
                     app:tint="#FFFFFF" />
 
                 <ImageView
+                    android:id="@+id/ivSim1SignalEdit"
                     android:layout_width="12dp"
                     android:layout_height="14dp"
-                    android:src="@drawable/ic_signal_plain"
                     android:contentDescription="@null"
+                    android:src="@drawable/ic_signal_plain"
                     app:tint="#FFFFFF" />
             </LinearLayout>
 
@@ -91,24 +94,27 @@
                 android:orientation="horizontal">
 
                 <ImageView
+                    android:id="@+id/ivSim2TypeEdit"
                     android:layout_width="12dp"
                     android:layout_height="14dp"
                     android:layout_marginEnd="2dp"
-                    android:src="@drawable/ic_4g"
                     android:contentDescription="@null"
+                    android:src="@drawable/ic_4g"
                     app:tint="#FFFFFF" />
 
                 <ImageView
+                    android:id="@+id/ivSim2SignalEdit"
                     android:layout_width="12dp"
                     android:layout_height="14dp"
-                    android:src="@drawable/ic_signal_plain"
                     android:contentDescription="@null"
+                    android:src="@drawable/ic_signal_plain"
                     app:tint="#FFFFFF" />
             </LinearLayout>
 
             <TextView
-                android:layout_width="22dp"
-                android:layout_height="wrap_content"
+                android:id="@+id/tvBatteryEdit"
+                android:layout_width="24dp"
+                android:layout_height="16dp"
                 android:background="@drawable/bg_battery_dynamic"
                 android:fontFamily="@font/samsung_one_400"
                 android:gravity="center"
@@ -158,15 +164,15 @@
             android:layout_height="64dp"
             android:layout_gravity="top|center_horizontal"
             android:layout_marginTop="21dp"
+            android:contentDescription="@null"
             android:padding="24dp"
             android:src="@drawable/ic_lock"
-            android:tint="#FFFFFF"
-            android:contentDescription="@null" />
+            app:tint="#FFFFFF" />
 
         <FrameLayout
             android:id="@+id/phoneButtonEdit"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
             android:layout_gravity="bottom|start"
             android:layout_marginStart="32dp"
             android:layout_marginBottom="32dp"
@@ -179,17 +185,18 @@
                 android:background="@drawable/bg_circle_translucent" />
 
             <ImageView
-                android:layout_width="63dp"
-                android:layout_height="61dp"
+                android:id="@+id/ivPhoneEdit"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
                 android:layout_gravity="center"
-                android:src="@drawable/ic_phone"
-                android:contentDescription="@null" />
+                android:contentDescription="@null"
+                android:src="@drawable/ic_phone" />
         </FrameLayout>
 
         <FrameLayout
             android:id="@+id/cameraButtonEdit"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
             android:layout_gravity="bottom|end"
             android:layout_marginEnd="32dp"
             android:layout_marginBottom="32dp"
@@ -202,11 +209,12 @@
                 android:background="@drawable/bg_circle_translucent" />
 
             <ImageView
-                android:layout_width="60dp"
-                android:layout_height="61dp"
+                android:id="@+id/ivCameraEdit"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
                 android:layout_gravity="center"
-                android:src="@drawable/ic_camera"
-                android:contentDescription="@null" />
+                android:contentDescription="@null"
+                android:src="@drawable/ic_camera" />
         </FrameLayout>
 
         <TextView
@@ -265,93 +273,60 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnExitEditor"
-            android:layout_width="70dp"
-            android:layout_height="64dp"
-            android:layout_marginTop="12dp"
-            android:layout_marginEnd="12dp"
-            android:text="Exit"
-            android:textAllCaps="false"
-            android:textColor="#FFFFFF"
-            app:backgroundTint="#00141414"
-            app:cornerRadius="20dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <LinearLayout
-            android:id="@+id/layoutCardLiftButtons"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="top|end"
-            android:layout_marginTop="12dp"
-            android:layout_marginEnd="12dp"
-            android:orientation="vertical">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnCardUp"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                android:text="▲"
-                android:textColor="#FFFFFF"
-                android:textSize="14sp"
-                app:backgroundTint="#4E312BE2"
-                app:cornerRadius="10dp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnCardDown"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginTop="6dp"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                android:text="▼"
-                android:textColor="#FFFFFF"
-                android:textSize="14sp"
-                app:backgroundTint="#4E312BE2"
-                app:cornerRadius="10dp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/layoutControlContent"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="#00141414"
-            android:elevation="16dp"
-            android:orientation="vertical"
-            android:padding="20dp">
+            android:layout_height="wrap_content">
 
             <LinearLayout
+                android:id="@+id/layoutControlContent"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center"
-                android:orientation="horizontal">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnLeft"
-                    android:layout_width="56dp"
-                    android:layout_height="56dp"
-                    android:layout_marginEnd="8dp"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-                    android:text="◀"
-                    android:textColor="#FFFFFF"
-                    android:textSize="18sp"
-                    app:backgroundTint="#2C2C2E"
-                    app:cornerRadius="14dp" />
+                android:layout_marginTop="12dp"
+                android:background="#00141414"
+                android:elevation="16dp"
+                android:orientation="vertical"
+                android:padding="20dp">
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnExitEditor"
+                        android:layout_width="70dp"
+                        android:layout_height="56dp"
+                        android:text="Exit"
+                        android:textAllCaps="false"
+                        android:textColor="#FFFFFF"
+                        app:backgroundTint="#2C2C2E"
+                        app:cornerRadius="12dp" />
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_weight="1" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnLeft"
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:layout_marginEnd="8dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:text="◀"
+                        android:textColor="#FFFFFF"
+                        android:textSize="18sp"
+                        app:backgroundTint="#2C2C2E"
+                        app:cornerRadius="14dp" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnUp"
                         android:layout_width="56dp"
                         android:layout_height="56dp"
-                        android:layout_marginBottom="4dp"
+                        android:layout_marginEnd="8dp"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
                         android:text="▲"
@@ -361,10 +336,70 @@
                         app:cornerRadius="14dp" />
 
                     <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnRight"
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:layout_marginEnd="20dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:text="▶"
+                        android:textColor="#FFFFFF"
+                        android:textSize="18sp"
+                        app:backgroundTint="#2C2C2E"
+                        app:cornerRadius="14dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnCardUp"
+                        android:layout_width="40dp"
+                        android:layout_height="56dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:text="▲"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp"
+                        app:backgroundTint="#4E312BE2"
+                        app:cornerRadius="10dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="24dp">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnToggleStyleMode"
+                        android:layout_width="70dp"
+                        android:layout_height="56dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:text=""
+                        android:textAllCaps="false"
+                        app:iconGravity="textTop"
+                        app:iconPadding="0dp"
+                        app:icon="@drawable/ic_menu_edit"
+                        app:iconTint="#FFFFFF"
+                        app:iconSize="24dp"
+                        app:backgroundTint="#4E312BE2"
+                        app:cornerRadius="12dp" />
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_weight="1" />
+
+                    <View
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:layout_marginEnd="8dp" />
+
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnDown"
                         android:layout_width="56dp"
                         android:layout_height="56dp"
-                        android:layout_marginTop="4dp"
+                        android:layout_marginEnd="8dp"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
                         android:text="▼"
@@ -372,129 +407,178 @@
                         android:textSize="18sp"
                         app:backgroundTint="#2C2C2E"
                         app:cornerRadius="14dp" />
+
+                    <View
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:layout_marginEnd="20dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnCardDown"
+                        android:layout_width="40dp"
+                        android:layout_height="56dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:text="▼"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp"
+                        app:backgroundTint="#4E312BE2"
+                        app:cornerRadius="10dp" />
                 </LinearLayout>
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnRight"
-                    android:layout_width="56dp"
-                    android:layout_height="56dp"
-                    android:layout_marginStart="8dp"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-                    android:text="▶"
-                    android:textColor="#FFFFFF"
-                    android:textSize="18sp"
-                    app:backgroundTint="#2C2C2E"
-                    app:cornerRadius="14dp" />
-            </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:gravity="center"
-                android:orientation="horizontal">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnHideControls"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="0dp"
-                    android:layout_height="48dp"
-                    android:layout_marginEnd="8dp"
-                    android:layout_weight="1"
-                    android:text="Hide View"
-                    android:textColor="#E0E0E0"
-                    app:cornerRadius="10dp"
-                    app:strokeColor="#444444" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnReset"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="0dp"
-                    android:layout_height="48dp"
-                    android:layout_marginStart="8dp"
-                    android:layout_weight="1"
-                    android:text="Reset"
-                    android:textColor="#D12012"
-                    app:cornerRadius="10dp"
-                    app:strokeColor="#D12012" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:id="@+id/layoutPositionTools"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="SCALE"
-                    android:textColor="#888888"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
+                    android:orientation="vertical">
 
-                <SeekBar
-                    android:id="@+id/seekScale"
-                    android:layout_width="0dp"
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="0dp"
+                        android:gravity="center"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnHideControls"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_marginEnd="8dp"
+                            android:layout_weight="1"
+                            android:text="Hide View"
+                            android:textColor="#E0E0E0"
+                            app:cornerRadius="10dp"
+                            app:strokeColor="#444444" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnReset"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_marginStart="8dp"
+                            android:layout_weight="1"
+                            android:text="Reset"
+                            android:textColor="#D12012"
+                            app:cornerRadius="10dp"
+                            app:strokeColor="#D12012" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="SCALE"
+                            android:textColor="#888888"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <SeekBar
+                            android:id="@+id/seekScale"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_marginEnd="12dp"
+                            android:layout_weight="1"
+                            android:max="150"
+                            android:progressTint="#5800D1"
+                            android:thumbTint="#5800D1" />
+
+                        <EditText
+                            android:id="@+id/etScalePercent"
+                            android:layout_width="60dp"
+                            android:layout_height="40dp"
+                            android:background="#2C2C2E"
+                            android:gravity="center"
+                            android:imeOptions="actionDone"
+                            android:inputType="number"
+                            android:maxLines="1"
+                            android:text="100"
+                            android:textColor="#FFFFFF"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/layoutStyleTools"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:layout_marginEnd="12dp"
-                    android:layout_weight="1"
-                    android:max="150"
-                    android:progressTint="#5800D1"
-                    android:thumbTint="#5800D1" />
+                    android:layout_marginTop="18dp"
+                    android:orientation="vertical"
+                    android:visibility="gone">
 
-                <EditText
-                    android:id="@+id/etScalePercent"
-                    android:layout_width="60dp"
-                    android:layout_height="40dp"
-                    android:background="#2C2C2E"
+                    <TextView
+                        android:id="@+id/tvStylePrompt"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingBottom="10dp"
+                        android:text="Select an element on the screen first, then tap one of the style circles."
+                        android:textColor="#D3D3D3"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:gravity="center"
+                        android:textAlignment="center" />
+
+                    <HorizontalScrollView
+                        android:id="@+id/scrollStyleOptions"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fillViewport="true"
+                        android:scrollbars="none">
+
+                        <LinearLayout
+                            android:id="@+id/containerStyleOptions"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_horizontal"
+                            android:orientation="horizontal"
+                            android:paddingBottom="8dp" />
+                    </HorizontalScrollView>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
                     android:gravity="center"
-                    android:imeOptions="actionDone"
-                    android:inputType="number"
-                    android:maxLines="1"
-                    android:text="100"
-                    android:textColor="#FFFFFF"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSaveLayout"
+                        android:layout_width="0dp"
+                        android:layout_height="54dp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_weight="1"
+                        android:text="Save Config"
+                        android:textAllCaps="false"
+                        android:textColor="#FFFFFF"
+                        android:textSize="15sp"
+                        app:backgroundTint="#5800D1"
+                        app:cornerRadius="12dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnLoadLayout"
+                        android:layout_width="0dp"
+                        android:layout_height="54dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:text="Load Config"
+                        android:textAllCaps="false"
+                        android:textColor="#FFFFFF"
+                        android:textSize="15sp"
+                        app:backgroundTint="#2C2C2E"
+                        app:cornerRadius="12dp" />
+                </LinearLayout>
             </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:gravity="center"
-                android:orientation="horizontal">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnSaveLayout"
-                    android:layout_width="0dp"
-                    android:layout_height="54dp"
-                    android:layout_marginEnd="8dp"
-                    android:layout_weight="1"
-                    android:text="Save Config"
-                    android:textAllCaps="false"
-                    android:textColor="#FFFFFF"
-                    android:textSize="15sp"
-                    app:backgroundTint="#5800D1"
-                    app:cornerRadius="12dp" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnLoadLayout"
-                    android:layout_width="0dp"
-                    android:layout_height="54dp"
-                    android:layout_marginStart="8dp"
-                    android:layout_weight="1"
-                    android:text="Load Config"
-                    android:textAllCaps="false"
-                    android:textColor="#FFFFFF"
-                    android:textSize="15sp"
-                    app:backgroundTint="#2C2C2E"
-                    app:cornerRadius="12dp" />
-            </LinearLayout>
-        </LinearLayout>
+        </FrameLayout>
     </com.google.android.material.card.MaterialCardView>
 
     <com.google.android.material.button.MaterialButton
@@ -503,9 +587,10 @@
         android:layout_height="54dp"
         android:layout_marginBottom="20dp"
         android:text="Show Controls"
-        app:cornerRadius="12dp"
         android:visibility="gone"
+        app:cornerRadius="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

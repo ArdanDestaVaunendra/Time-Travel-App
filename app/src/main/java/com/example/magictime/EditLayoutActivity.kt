@@ -22,7 +22,11 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.view.HapticFeedbackConstants
-import kotlin.text.compareTo
+import android.graphics.Typeface
+import android.widget.LinearLayout
+import androidx.core.content.res.ResourcesCompat
+import com.google.android.material.button.MaterialButton
+import android.view.Gravity
 
 class EditLayoutActivity : AppCompatActivity() {
 
@@ -47,6 +51,19 @@ class EditLayoutActivity : AppCompatActivity() {
     private var raisedTranslationY = 0f
     private var lastDpadHapticMs = 0L
     private val dpadHapticIntervalMs = 120L
+    private var isStyleModeActive = false
+    private var currentSelectedView: View? = null
+
+    private var selectedCameraIconRes = R.drawable.ic_camera
+    private var selectedPhoneIconRes = R.drawable.ic_phone
+    private var selectedLockIconRes = R.drawable.ic_lock
+    private var selectedStatusPackRes = 0
+    private var selectedBatteryStyleRes = R.drawable.bg_battery_dynamic
+    private var selectedClockFontRes = R.font.samsung_one_700
+    private var selectedDateFontRes = R.font.samsung_one_700
+    private var selectedOperatorFontRes = R.font.samsung_one_400
+    private var selectedMarqueeFontRes = R.font.samsung_one_400
+    private var toolsStableHeight = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -86,7 +103,28 @@ class EditLayoutActivity : AppCompatActivity() {
         setupReset()
         setupCanvasTapToClear()
         setupDpadHold()
+        setupStyleModeToggle()
+        updateStylePanelFor(null)
         updateControlState()
+        lockToolsPanelHeight()
+    }
+
+    private fun lockToolsPanelHeight() {
+        if (toolsStableHeight > 0) return
+
+        binding.layoutPositionTools.post {
+            toolsStableHeight = binding.layoutPositionTools.height
+            if (toolsStableHeight <= 0) return@post
+
+            binding.layoutPositionTools.layoutParams =
+                binding.layoutPositionTools.layoutParams.apply { height = toolsStableHeight }
+
+            binding.layoutStyleTools.layoutParams =
+                binding.layoutStyleTools.layoutParams.apply { height = toolsStableHeight }
+
+            binding.layoutPositionTools.requestLayout()
+            binding.layoutStyleTools.requestLayout()
+        }
     }
 
     private fun editableViews(): List<View> = listOf(
@@ -187,9 +225,13 @@ class EditLayoutActivity : AppCompatActivity() {
 
     private fun setActiveView(v: View) {
         activeView = v
+        currentSelectedView = v
+
         editableViews().forEach {
             it.alpha = if (it == v) 1f else 0.78f
         }
+
+        if (isStyleModeActive) updateStylePanelFor(v)
 
         moveActiveIndicator(v)
         updateControlState()
@@ -289,6 +331,29 @@ class EditLayoutActivity : AppCompatActivity() {
             binding.etScalePercent.setText("100")
             binding.seekScale.progress = 100 - minScalePercent
         }
+
+        selectedCameraIconRes = R.drawable.ic_camera
+        selectedPhoneIconRes = R.drawable.ic_phone
+        selectedLockIconRes = R.drawable.ic_lock
+        selectedStatusPackRes = resolveDrawable("pack_status_default", 0)
+        selectedClockFontRes = R.font.samsung_one_700
+        selectedDateFontRes = R.font.samsung_one_700
+        selectedOperatorFontRes = R.font.samsung_one_400
+        selectedMarqueeFontRes = R.font.samsung_one_400
+        selectedBatteryStyleRes = R.drawable.bg_battery_dynamic
+        applyBatteryStyle(selectedBatteryStyleRes)
+
+        binding.ivCameraEdit.setImageResource(selectedCameraIconRes)
+        binding.ivPhoneEdit.setImageResource(selectedPhoneIconRes)
+        binding.ivLockEdit.setImageResource(selectedLockIconRes)
+        applyStatusPackByName(resourceNameOf(selectedStatusPackRes))
+
+        ResourcesCompat.getFont(this, selectedClockFontRes)?.let { binding.tvClockEdit.typeface = it }
+        ResourcesCompat.getFont(this, selectedDateFontRes)?.let { binding.tvDateEdit.typeface = it }
+        ResourcesCompat.getFont(this, selectedOperatorFontRes)?.let { binding.tvOperatorEdit.typeface = it }
+        ResourcesCompat.getFont(this, selectedMarqueeFontRes)?.let { binding.tvMarqueeEdit.typeface = it }
+
+        if (isStyleModeActive) updateStylePanelFor(currentSelectedView)
     }
 
     private fun restoreFromActiveOrDefault() {
@@ -306,7 +371,18 @@ class EditLayoutActivity : AppCompatActivity() {
             statusBar = Pos(binding.statusBarEdit.x, binding.statusBarEdit.y, binding.statusBarEdit.scaleX),
             lockIcon = Pos(binding.ivLockEdit.x, binding.ivLockEdit.y, binding.ivLockEdit.scaleX),
             phoneButton = Pos(binding.phoneButtonEdit.x, binding.phoneButtonEdit.y, binding.phoneButtonEdit.scaleX),
-            cameraButton = Pos(binding.cameraButtonEdit.x, binding.cameraButtonEdit.y, binding.cameraButtonEdit.scaleX)
+            cameraButton = Pos(binding.cameraButtonEdit.x, binding.cameraButtonEdit.y, binding.cameraButtonEdit.scaleX),
+            cameraIconRes = selectedCameraIconRes,
+            phoneIconRes = selectedPhoneIconRes,
+            lockIconRes = selectedLockIconRes,
+            statusBarPackRes = selectedStatusPackRes,
+            clockFontRes = selectedClockFontRes,
+            textFontRes = selectedOperatorFontRes,
+            dateFontRes = selectedDateFontRes,
+            operatorFontRes = selectedOperatorFontRes,
+            marqueeFontRes = selectedMarqueeFontRes,
+
+            batteryStyleRes = selectedBatteryStyleRes
         )
     }
     private fun applyConfig(c: LayoutConfig) {
@@ -355,6 +431,39 @@ class EditLayoutActivity : AppCompatActivity() {
             binding.cameraButtonEdit.scaleX = it.scale
             binding.cameraButtonEdit.scaleY = it.scale
         }
+
+        selectedCameraIconRes = if (c.cameraIconRes != 0) c.cameraIconRes else R.drawable.ic_camera
+        selectedPhoneIconRes = if (c.phoneIconRes != 0) c.phoneIconRes else R.drawable.ic_phone
+        selectedLockIconRes = if (c.lockIconRes != 0) c.lockIconRes else R.drawable.ic_lock
+        selectedStatusPackRes = c.statusBarPackRes
+        selectedClockFontRes = if (c.clockFontRes != 0) c.clockFontRes else R.font.samsung_one_700
+        selectedDateFontRes = when {
+            c.dateFontRes != 0 -> c.dateFontRes
+            c.textFontRes != 0 -> c.textFontRes
+            else -> R.font.samsung_one_700
+        }
+        selectedOperatorFontRes = when {
+            c.operatorFontRes != 0 -> c.operatorFontRes
+            c.textFontRes != 0 -> c.textFontRes
+            else -> R.font.samsung_one_400
+        }
+        selectedMarqueeFontRes = when {
+            c.marqueeFontRes != 0 -> c.marqueeFontRes
+            c.textFontRes != 0 -> c.textFontRes
+            else -> R.font.samsung_one_400
+        }
+        selectedBatteryStyleRes = if (c.batteryStyleRes != 0) c.batteryStyleRes else R.drawable.bg_battery_dynamic
+        applyBatteryStyle(selectedBatteryStyleRes)
+
+        binding.ivCameraEdit.setImageResource(selectedCameraIconRes)
+        binding.ivPhoneEdit.setImageResource(selectedPhoneIconRes)
+        binding.ivLockEdit.setImageResource(selectedLockIconRes)
+        applyStatusPackByName(resourceNameOf(selectedStatusPackRes))
+
+        ResourcesCompat.getFont(this, selectedClockFontRes)?.let { binding.tvClockEdit.typeface = it }
+        ResourcesCompat.getFont(this, selectedDateFontRes)?.let { binding.tvDateEdit.typeface = it }
+        ResourcesCompat.getFont(this, selectedOperatorFontRes)?.let { binding.tvOperatorEdit.typeface = it }
+        ResourcesCompat.getFont(this, selectedMarqueeFontRes)?.let { binding.tvMarqueeEdit.typeface = it }
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -579,8 +688,10 @@ class EditLayoutActivity : AppCompatActivity() {
 
     private fun clearActiveView() {
         activeView = null
+        currentSelectedView = null
         editableViews().forEach { it.alpha = 1f }
         binding.viewActiveIndicator.visibility = View.GONE
+        if (isStyleModeActive) updateStylePanelFor(null)
         updateControlState()
     }
 
@@ -658,7 +769,17 @@ class EditLayoutActivity : AppCompatActivity() {
                 samePos(a.statusBar, b.statusBar) &&
                 samePosNullable(a.lockIcon, b.lockIcon) &&
                 samePosNullable(a.phoneButton, b.phoneButton) &&
-                samePosNullable(a.cameraButton, b.cameraButton)
+                samePosNullable(a.cameraButton, b.cameraButton) &&
+                a.cameraIconRes == b.cameraIconRes &&
+                a.phoneIconRes == b.phoneIconRes &&
+                a.lockIconRes == b.lockIconRes &&
+                a.statusBarPackRes == b.statusBarPackRes &&
+                a.batteryStyleRes == b.batteryStyleRes &&
+                a.clockFontRes == b.clockFontRes &&
+                a.textFontRes == b.textFontRes &&
+                a.dateFontRes == b.dateFontRes &&
+                a.operatorFontRes == b.operatorFontRes &&
+                a.marqueeFontRes == b.marqueeFontRes
     }
 
     private fun samePosNullable(a: Pos?, b: Pos?): Boolean {
@@ -675,8 +796,8 @@ class EditLayoutActivity : AppCompatActivity() {
 
     private fun setupCardLiftButtons() {
         binding.cardControls.post {
-            val byCardHeight = binding.cardControls.height * 1.2f
-            val byCanvas = binding.canvasRoot.height * 1.2f
+            val byCardHeight = binding.cardControls.height * 1.1f
+            val byCanvas = binding.canvasRoot.height * 1.1f
             raisedTranslationY = -kotlin.math.min(byCardHeight, byCanvas)
         }
 
@@ -721,6 +842,337 @@ class EditLayoutActivity : AppCompatActivity() {
                 vibrator.vibrate(durationMs)
             }
         }
+    }
+
+    private fun setupStyleModeToggle() {
+        binding.btnToggleStyleMode.setOnClickListener {
+            isStyleModeActive = !isStyleModeActive
+            val showStyle = isStyleModeActive
+
+            lockToolsPanelHeight()
+
+            if (toolsStableHeight == 0) {
+                toolsStableHeight = binding.layoutPositionTools.height
+            }
+
+            if (showStyle) {
+                binding.layoutPositionTools.visibility = View.GONE
+                binding.layoutStyleTools.alpha = 0f
+                binding.layoutStyleTools.visibility = View.VISIBLE
+                binding.layoutStyleTools.animate().alpha(1f).setDuration(140).start()
+            } else {
+                binding.layoutStyleTools.visibility = View.GONE
+                binding.layoutPositionTools.alpha = 0f
+                binding.layoutPositionTools.visibility = View.VISIBLE
+                binding.layoutPositionTools.animate().alpha(1f).setDuration(140).start()
+            }
+
+            updateStylePanelFor(currentSelectedView)
+        }
+    }
+
+    private fun updateStylePanelFor(view: View?) {
+        if (!isStyleModeActive) return
+
+        binding.containerStyleOptions.removeAllViews()
+
+        if (view == null) {
+            binding.tvStylePrompt.text = "Select an element on the screen first, then tap one of the style circles."
+            return
+        }
+
+        binding.tvStylePrompt.text = "Tap one of the circles below to apply a style."
+
+        binding.tvStylePrompt.visibility = View.VISIBLE
+
+        val optionsClock = listOf(
+            R.font.samsung_one_700,
+            R.font.moresugar_regular,
+            R.font.nunito_extrabold
+        )
+
+        val optionsDate = listOf(
+            R.font.samsung_one_700,
+            R.font.moresugar_regular,
+            R.font.nunito_extrabold
+        )
+
+        val optionsText = listOf(
+            R.font.samsung_one_400,
+            R.font.moresugar_thin,
+            R.font.nunito_medium
+        )
+
+        when (view.id) {
+            R.id.cameraButtonEdit -> {
+                addIconOptionButtons(
+                    options = listOf(
+                        R.drawable.ic_camera,
+                        R.drawable.ic_camera_custom1,
+                        R.drawable.ic_camera_custom2
+                    ),
+                    selected = selectedCameraIconRes
+                ) { resId ->
+                    selectedCameraIconRes = resId
+                    binding.ivCameraEdit.setImageResource(resId)
+                }
+            }
+
+            R.id.phoneButtonEdit -> {
+                addIconOptionButtons(
+                    options = listOf(
+                        R.drawable.ic_phone,
+                        R.drawable.ic_phone_custom1,
+                        R.drawable.ic_phone_custom2
+                    ),
+                    selected = selectedPhoneIconRes
+                ) { resId ->
+                    selectedPhoneIconRes = resId
+                    binding.ivPhoneEdit.setImageResource(resId)
+                }
+            }
+
+            R.id.ivLockEdit -> {
+                addIconOptionButtons(
+                    options = listOf(
+                        R.drawable.ic_lock,
+                        R.drawable.ic_lock_custom1,
+                        R.drawable.ic_lock_custom2
+                    ),
+                    selected = selectedLockIconRes
+                ) { resId ->
+                    selectedLockIconRes = resId
+                    binding.ivLockEdit.setImageResource(resId)
+                }
+            }
+
+            R.id.statusBarEdit -> {
+                binding.tvStylePrompt.text = "Choose battery icon style. Wi-Fi & signal stay default."
+
+                val options = listOf(
+                    R.drawable.bg_battery_dynamic,
+                    R.drawable.bg_battery_custom1,
+                    R.drawable.bg_battery_custom2
+                )
+
+                addIconOptionButtons(options, selectedBatteryStyleRes) { resId ->
+                    selectedBatteryStyleRes = resId
+                    applyBatteryStyle(selectedBatteryStyleRes)
+                }
+            }
+
+            R.id.tvClockEdit -> {
+                addFontOptionButtons(optionsClock, selectedClockFontRes) { fontRes ->
+                    selectedClockFontRes = fontRes
+                    binding.tvClockEdit.typeface = ResourcesCompat.getFont(this, fontRes)
+                }
+            }
+
+            R.id.tvDateEdit -> {
+                addFontOptionButtons(optionsDate, selectedDateFontRes) { fontRes ->
+                    selectedDateFontRes = fontRes
+                    binding.tvDateEdit.typeface = ResourcesCompat.getFont(this, fontRes)
+                }
+            }
+
+            R.id.tvOperatorEdit -> {
+                addFontOptionButtons(optionsText, selectedOperatorFontRes) { fontRes ->
+                    selectedOperatorFontRes = fontRes
+                    binding.tvOperatorEdit.typeface = ResourcesCompat.getFont(this, fontRes)
+                }
+            }
+
+            R.id.tvMarqueeEdit -> {
+                addFontOptionButtons(optionsText, selectedMarqueeFontRes) { fontRes ->
+                    selectedMarqueeFontRes = fontRes
+                    binding.tvMarqueeEdit.typeface = ResourcesCompat.getFont(this, fontRes)
+                }
+            }
+
+            else -> {
+                binding.tvStylePrompt.text = "This element does not have a specific style option yet."
+            }
+        }
+    }
+
+    private fun addIconOptionButtons(
+        options: List<Int>,
+        selected: Int,
+        onClick: (Int) -> Unit
+    ) {
+        val size = (64 * resources.displayMetrics.density).toInt()
+        val margin = (10 * resources.displayMetrics.density).toInt()
+        val iconPx = (30 * resources.displayMetrics.density).toInt()
+        val radius = size / 2
+
+        options.filter { it != 0 }.forEach { resId ->
+            val btn = MaterialButton(this).apply {
+                layoutParams = LinearLayout.LayoutParams(size, size).apply {
+                    marginEnd = margin
+                }
+
+                text = ""
+                gravity = Gravity.CENTER
+                textAlignment = View.TEXT_ALIGNMENT_CENTER
+
+                setIconResource(resId)
+                iconSize = iconPx
+                iconPadding = 0
+                iconGravity = MaterialButton.ICON_GRAVITY_TEXT_START
+
+                iconTint = android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE)
+
+                insetTop = 0
+                insetBottom = 0
+                setPadding(0, 0, 0, 0)
+
+                cornerRadius = radius
+                strokeWidth = if (resId == selected) 4 else 2
+                strokeColor = android.content.res.ColorStateList.valueOf(
+                    if (resId == selected) colorPurple else colorGray
+                )
+
+                setOnClickListener {
+                    onClick(resId)
+                    updateStylePanelFor(currentSelectedView)
+                }
+            }
+            binding.containerStyleOptions.addView(btn)
+        }
+    }
+
+    private fun addCustomStatusButton() {
+        val size = (64 * resources.displayMetrics.density).toInt()
+        val margin = (10 * resources.displayMetrics.density).toInt()
+
+        val btn = MaterialButton(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                size
+            ).apply {
+                marginEnd = margin
+            }
+
+            text = "Custom"
+            isAllCaps = false
+            cornerRadius = size / 2
+            setPadding((16 * resources.displayMetrics.density).toInt(), 0, (16 * resources.displayMetrics.density).toInt(), 0)
+            strokeWidth = 2
+            strokeColor = android.content.res.ColorStateList.valueOf(colorGray)
+
+            setOnClickListener {
+                selectedStatusPackRes = 0
+                applyCustomStatusBarPack()
+                updateStylePanelFor(currentSelectedView)
+            }
+        }
+
+        binding.containerStyleOptions.addView(btn)
+    }
+
+    private fun applyCustomStatusBarPack() {
+
+    }
+
+    private fun addFontOptionButtons(
+        options: List<Int>,
+        selected: Int,
+        onClick: (Int) -> Unit
+    ) {
+        val size = (64 * resources.displayMetrics.density).toInt()
+        val margin = (10 * resources.displayMetrics.density).toInt()
+        val radius = size / 2
+
+        options.filter { it != 0 }.forEachIndexed { idx, resId ->
+            val btn = MaterialButton(this).apply {
+                layoutParams = LinearLayout.LayoutParams(size, size).apply {
+                    marginEnd = margin
+                }
+
+                text = "Aa"
+                isAllCaps = false
+                setPadding(0, 0, 0, 0)
+                insetTop = 0
+                insetBottom = 0
+                iconPadding = 0
+
+                cornerRadius = radius
+                strokeWidth = if (resId == selected) 4 else 2
+                strokeColor = android.content.res.ColorStateList.valueOf(
+                    if (resId == selected) colorPurple else colorGray
+                )
+
+                textSize = 12f
+                setTextColor(android.graphics.Color.WHITE)
+                typeface = ResourcesCompat.getFont(this@EditLayoutActivity, resId)
+
+                setOnClickListener {
+                    onClick(resId)
+                    updateStylePanelFor(currentSelectedView)
+                }
+            }
+            binding.containerStyleOptions.addView(btn)
+        }
+    }
+
+    private fun resolveDrawable(name: String, fallback: Int): Int {
+        val id = resources.getIdentifier(name, "drawable", packageName)
+        return if (id != 0) id else fallback
+    }
+
+    private fun resolveFont(name: String, fallback: Int): Int {
+        val id = resources.getIdentifier(name, "font", packageName)
+        return if (id != 0) id else fallback
+    }
+
+    private fun resourceNameOf(resId: Int): String =
+        runCatching { resources.getResourceEntryName(resId) }.getOrDefault("")
+
+    private fun applyStatusPackByName(name: String) {
+        when (name) {
+            "pack_status_ios" -> {
+                binding.ivWifiEdit.setImageResource(resolveDrawable("ic_wifi_ios", R.drawable.ic_wifi))
+                binding.ivSim1TypeEdit.setImageResource(resolveDrawable("ic_4g_ios", R.drawable.ic_4g))
+                binding.ivSim1SignalEdit.setImageResource(resolveDrawable("ic_signal_ios", R.drawable.ic_signal_plain))
+                binding.ivSim2TypeEdit.setImageResource(resolveDrawable("ic_4g_ios", R.drawable.ic_4g))
+                binding.ivSim2SignalEdit.setImageResource(resolveDrawable("ic_signal_ios", R.drawable.ic_signal_plain))
+                binding.tvBatteryEdit.setBackgroundResource(resolveDrawable("bg_battery_ios", R.drawable.bg_battery_dynamic))
+            }
+            "pack_status_pixel" -> {
+                binding.ivWifiEdit.setImageResource(resolveDrawable("ic_wifi_pixel", R.drawable.ic_wifi))
+                binding.ivSim1TypeEdit.setImageResource(resolveDrawable("ic_4g_pixel", R.drawable.ic_4g))
+                binding.ivSim1SignalEdit.setImageResource(resolveDrawable("ic_signal_pixel", R.drawable.ic_signal_plain))
+                binding.ivSim2TypeEdit.setImageResource(resolveDrawable("ic_4g_pixel", R.drawable.ic_4g))
+                binding.ivSim2SignalEdit.setImageResource(resolveDrawable("ic_signal_pixel", R.drawable.ic_signal_plain))
+                binding.tvBatteryEdit.setBackgroundResource(resolveDrawable("bg_battery_pixel", R.drawable.bg_battery_dynamic))
+            }
+            else -> {
+                binding.ivWifiEdit.setImageResource(R.drawable.ic_wifi)
+                binding.ivSim1TypeEdit.setImageResource(R.drawable.ic_4g)
+                binding.ivSim1SignalEdit.setImageResource(R.drawable.ic_signal_plain)
+                binding.ivSim2TypeEdit.setImageResource(R.drawable.ic_4g)
+                binding.ivSim2SignalEdit.setImageResource(R.drawable.ic_signal_plain)
+                binding.tvBatteryEdit.setBackgroundResource(R.drawable.bg_battery_dynamic)
+            }
+        }
+    }
+
+    private fun applyBatteryStyle(resId: Int) {
+        binding.ivWifiEdit.setImageResource(R.drawable.ic_wifi)
+        binding.ivSim1TypeEdit.setImageResource(R.drawable.ic_4g)
+        binding.ivSim1SignalEdit.setImageResource(R.drawable.ic_signal_plain)
+        binding.ivSim2TypeEdit.setImageResource(R.drawable.ic_4g)
+        binding.ivSim2SignalEdit.setImageResource(R.drawable.ic_signal_plain)
+
+        binding.tvBatteryEdit.setBackgroundResource(resId)
+        binding.tvBatteryEdit.tag = resId
+
+        val textColor = if (resId == R.drawable.bg_battery_dynamic) {
+            android.graphics.Color.BLACK
+        } else {
+            android.graphics.Color.WHITE
+        }
+        binding.tvBatteryEdit.setTextColor(textColor)
     }
 
     private fun toast(msg: String) {
