@@ -21,19 +21,50 @@ class TutorialActivity : AppCompatActivity() {
             showSecretManualDialog()
         }
 
-        binding.cardVideoRoutine.setOnClickListener {
-            openWebLink("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
-        }
-
-        binding.cardVideoFloat.setOnClickListener {
-            openWebLink("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
-        }
+        setupVideoList()
     }
 
     private fun openWebLink(url: String) {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
         startActivity(intent)
     }
+
+    private fun setupVideoList() {
+        val url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+
+        val videos = listOf(
+            TutorialVideo("Trailer", "Quick preview of the app", url),
+            TutorialVideo("Getting Started", "First steps and basic flow", url),
+            TutorialVideo("Core System", "How the engine works", url),
+            TutorialVideo("Secret PIN System", "Hidden PIN inputs and modes", url),
+            TutorialVideo("Layout & Customization", "Edit lockscreen positions and styles", url),
+            TutorialVideo("Routine #1: Reality Shift", "Control the flow of time through invisible triggers", url),
+            TutorialVideo("Routine #2: From Within", "Digital objects transition into physical reality", url),
+            TutorialVideo("Routine #3: In a Million", "Spectator input is secretly captured and turned into a live prediction", url),
+            TutorialVideo("Routine #4: Hidden Signal", "Dynamic text reveals hidden data in plain sight", url),
+            TutorialVideo("Advanced / Pro Tip", "Extra tips for stronger performance", url)
+        )
+
+        binding.videoListContainer.removeAllViews()
+
+        videos.forEach { video ->
+            val card = layoutInflater.inflate(R.layout.item_tutorial_video, binding.videoListContainer, false)
+            card.findViewById<android.widget.TextView>(R.id.tvVideoTitle).text = video.title
+            card.findViewById<android.widget.TextView>(R.id.tvVideoSubtitle).text = video.subtitle
+
+            card.setOnClickListener {
+                openWebLink(video.url)
+            }
+
+            binding.videoListContainer.addView(card)
+        }
+    }
+
+    private data class TutorialVideo(
+        val title: String,
+        val subtitle: String,
+        val url: String
+    )
 
     private fun showSecretManualDialog() {
         val manualHtml = """

@@ -357,7 +357,7 @@
                         android:text="▲"
                         android:textColor="#FFFFFF"
                         android:textSize="14sp"
-                        app:backgroundTint="#4E312BE2"
+                        app:backgroundTint="#5800D1"
                         app:cornerRadius="10dp" />
                 </LinearLayout>
 
@@ -382,7 +382,7 @@
                         app:icon="@drawable/ic_menu_edit"
                         app:iconTint="#FFFFFF"
                         app:iconSize="24dp"
-                        app:backgroundTint="#4E312BE2"
+                        app:backgroundTint="#5800D1"
                         app:cornerRadius="12dp" />
 
                     <View
@@ -422,7 +422,7 @@
                         android:text="▼"
                         android:textColor="#FFFFFF"
                         android:textSize="14sp"
-                        app:backgroundTint="#4E312BE2"
+                        app:backgroundTint="#5800D1"
                         app:cornerRadius="10dp" />
                 </LinearLayout>
 

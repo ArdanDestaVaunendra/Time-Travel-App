@@ -15,7 +15,7 @@ object DndManager {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
     fun isAutoEnabled(context: Context): Boolean =
-        prefs(context).getBoolean(KEY_USE_AUTO_DND, false)
+        prefs(context).getBoolean(KEY_USE_AUTO_DND, true)
 
     fun setAutoEnabled(context: Context, enabled: Boolean) {
         prefs(context).edit().putBoolean(KEY_USE_AUTO_DND, enabled).apply()

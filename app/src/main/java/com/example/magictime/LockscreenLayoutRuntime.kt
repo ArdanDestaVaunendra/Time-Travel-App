@@ -5,7 +5,6 @@ import android.view.View
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.res.ResourcesCompat
 import com.example.magictime.databinding.ActivityFakeLockBinding
-import kotlin.text.toInt
 
 object LockscreenLayoutRuntime {
 
@@ -173,6 +172,15 @@ object LockscreenLayoutRuntime {
         view.translationY = 0f
         view.scaleX = pos.scale
         view.scaleY = pos.scale
+
+        (view as? android.widget.TextView)?.apply {
+            isSingleLine = true
+            isSelected = true
+            isFocusable = true
+            isFocusableInTouchMode = true
+            setHorizontallyScrolling(true)
+            maxWidth = (resources.displayMetrics.widthPixels * 0.45f).toInt()
+        }
     }
 
     private fun applyPosAndScaleTopStart(view: View, pos: Pos) {

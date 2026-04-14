@@ -22,7 +22,6 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.view.HapticFeedbackConstants
-import android.graphics.Typeface
 import android.widget.LinearLayout
 import androidx.core.content.res.ResourcesCompat
 import com.google.android.material.button.MaterialButton
@@ -1117,11 +1116,6 @@ class EditLayoutActivity : AppCompatActivity() {
 
     private fun resolveDrawable(name: String, fallback: Int): Int {
         val id = resources.getIdentifier(name, "drawable", packageName)
-        return if (id != 0) id else fallback
-    }
-
-    private fun resolveFont(name: String, fallback: Int): Int {
-        val id = resources.getIdentifier(name, "font", packageName)
         return if (id != 0) id else fallback
     }
 

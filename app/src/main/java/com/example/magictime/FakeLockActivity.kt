@@ -27,10 +27,6 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.provider.MediaStore
-import android.renderscript.Allocation
-import android.renderscript.Element
-import android.renderscript.RenderScript
-import android.renderscript.ScriptIntrinsicBlur
 import android.view.GestureDetector
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -58,8 +54,8 @@ import kotlin.math.abs
 import kotlinx.coroutines.withContext
 import androidx.core.view.ViewCompat
 import android.view.WindowManager
-import kotlin.div
-import kotlin.text.compareTo
+import kotlin.text.toInt
+import kotlin.times
 
 @Suppress("DEPRECATION")
 class FakeLockActivity : AppCompatActivity(), SensorEventListener {
@@ -102,8 +98,6 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     private var secretSetupStep = 0
     private var secretCardValue = ""
     private var forceCardPrediction = ""
-    private var isCardCodeEnabled = true
-
     private var isRevealEnabled = false
     private var revealText = ""
     private var revealDelay = 3
@@ -118,9 +112,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     private var floatActive = false
     private var floatScale = 91
     private var floatDelay = 0
-    private var floatIsCustom = false
     private var floatUri: String? = null
-    private var floatStockIndex = 0
     private var isBeingDragged = false
     private var velX = 0f
     private var velY = 0f
@@ -128,8 +120,8 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     private var sensitivity = 1.00f
     private var useShakeTrigger = false
     private var isFloatTriggerCountdown = false
-    private var lastAccel = android.hardware.SensorManager.GRAVITY_EARTH
-    private var currentAccel = android.hardware.SensorManager.GRAVITY_EARTH
+    private var lastAccel = SensorManager.GRAVITY_EARTH
+    private var currentAccel = SensorManager.GRAVITY_EARTH
     private var shakeAccel = 0.00f
 
     private val batteryReceiver: BroadcastReceiver = object : BroadcastReceiver() {
@@ -220,12 +212,12 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         screenWidth = resources.displayMetrics.widthPixels
 
         loadSettings()
-
         LockscreenLayoutRuntime.apply(LayoutConfigStore(this), binding)
+        enforcePinOverlayVisibilityState()
 
         isPinEnabled = appSettings.isPinEnabled
         correctPin = prefs.getString("CUSTOM_PIN", Defaults.PIN) ?: Defaults.PIN
-        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
 
         setupCardPhysicsAndTouch()
@@ -248,12 +240,11 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         startClockLoop()
 
         appSettings = prefManager.getActiveSession()
+
         loadSettings()
-
         LockscreenLayoutRuntime.apply(LayoutConfigStore(this), binding)
-
+        enforcePinOverlayVisibilityState()
         loadFloatConfigs()
-
         loadWallpaper()
         try {
             enforceImmersiveMode()
@@ -262,7 +253,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
         sensorManager.unregisterListener(this)
 
-        if (floatActive && useShakeTrigger) {
+        if (floatActive && useShakeTrigger && !isPinViewActive()) {
             accelerometer?.let {
                 sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME)
             }
@@ -302,10 +293,12 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         val showCarrier = appSettings.showOperator
         binding.tvTicker.visibility = if (showCarrier) View.VISIBLE else View.INVISIBLE
         binding.tvTicker.text = appSettings.operatorText
+        forceMarqueeIfNeeded(binding.tvTicker, appSettings.operatorText)
 
         val showMarquee = appSettings.showRunningText
         binding.tvMarqueeBottom.visibility = if (showMarquee) View.VISIBLE else View.INVISIBLE
         binding.tvMarqueeBottom.text = appSettings.marqueeText
+        forceMarqueeIfNeeded(binding.tvMarqueeBottom, appSettings.marqueeText)
 
         isPinEnabled = appSettings.isPinEnabled
         isRevealEnabled = appSettings.activeRoutines.contains("PREDICTION")
@@ -385,6 +378,79 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         }
     }
 
+    private fun enforcePinOverlayVisibilityState() {
+        val isPinVisible = binding.pinScreenContainer.visibility == View.VISIBLE
+
+        val underlyingViews = listOf(
+            binding.tvBigClock,
+            binding.tvDate,
+            binding.ivLock,
+            binding.bgPhone,
+            binding.ivPhone,
+            binding.bgCamera,
+            binding.ivCamera,
+            binding.statusBarContainer,
+            binding.tvTicker,
+            binding.tvMarqueeBottom
+        )
+
+        if (isPinVisible) {
+            underlyingViews.forEach {
+                it.visibility = View.INVISIBLE
+                it.alpha = 1f
+                it.translationX = 0f
+                it.translationY = 0f
+            }
+        } else {
+            binding.tvBigClock.visibility = View.VISIBLE
+            binding.tvDate.visibility = View.VISIBLE
+            binding.ivLock.visibility = View.VISIBLE
+            binding.bgPhone.visibility = View.VISIBLE
+            binding.ivPhone.visibility = View.VISIBLE
+            binding.bgCamera.visibility = View.VISIBLE
+            binding.ivCamera.visibility = View.VISIBLE
+            binding.statusBarContainer.visibility = View.VISIBLE
+            binding.tvTicker.visibility = if (appSettings.showOperator) View.VISIBLE else View.INVISIBLE
+            binding.tvMarqueeBottom.visibility = if (appSettings.showRunningText) View.VISIBLE else View.INVISIBLE
+        }
+    }
+
+    private fun isPinViewActive(): Boolean {
+        return binding.pinScreenContainer.visibility == View.VISIBLE
+    }
+
+    private fun forceMarqueeIfNeeded(textView: TextView, rawText: String) {
+        textView.post {
+            val cleanText = rawText.trim()
+            if (cleanText.isEmpty()) {
+                textView.text = cleanText
+                textView.isSelected = true
+                return@post
+            }
+
+            val availableWidth = textView.width - textView.paddingStart - textView.paddingEnd
+            val textWidth = textView.paint.measureText(cleanText)
+
+            if (textWidth <= availableWidth) {
+                val spaceWidth = textView.paint.measureText(" ")
+                val neededExtraPx = (availableWidth - textWidth) + (spaceWidth * 8)
+
+                val spaceCount = (neededExtraPx / spaceWidth).toInt().coerceAtLeast(8)
+                textView.text = cleanText + " ".repeat(spaceCount)
+            } else {
+                textView.text = cleanText
+            }
+
+            textView.isSingleLine = true
+            textView.ellipsize = android.text.TextUtils.TruncateAt.MARQUEE
+            textView.marqueeRepeatLimit = -1
+            textView.isFocusable = true
+            textView.isFocusableInTouchMode = true
+            textView.isSelected = true
+            textView.setHorizontallyScrolling(true)
+        }
+    }
+
     private fun loadWallpaper() {
         val uriString = appSettings.wallpaperPath
 
@@ -404,7 +470,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                 val safeW = (sourceBitmap.width / 5).coerceAtLeast(1)
                 val safeH = (sourceBitmap.height / 5).coerceAtLeast(1)
                 val scaledBitmap = Bitmap.createScaledBitmap(sourceBitmap, safeW, safeH, false)
-                blurredWallpaperBitmap = blurBitmap(this@FakeLockActivity, scaledBitmap, 20f)
+                blurredWallpaperBitmap = blurBitmap(scaledBitmap, 20f)
 
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -417,7 +483,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                 val safeW = (fallback.width / 5).coerceAtLeast(1)
                 val safeH = (fallback.height / 5).coerceAtLeast(1)
                 val scaledBitmap = Bitmap.createScaledBitmap(fallback, safeW, safeH, false)
-                blurredWallpaperBitmap = blurBitmap(this@FakeLockActivity, scaledBitmap, 20f)
+                blurredWallpaperBitmap = blurBitmap(scaledBitmap, 20f)
             }
         }
     }
@@ -453,7 +519,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
         try {
             binding.tvBigClock.text = bigFormat.format(Date(now))
-        } catch (e: Exception) {
+        } catch (_: Exception) {
         }
 
         val langCode = appSettings.dateLanguage
@@ -471,7 +537,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         val dateFormat = SimpleDateFormat(datePattern, locale)
         try {
             binding.tvDate.text = dateFormat.format(Date(now))
-        } catch (e: Exception) {
+        } catch (_: Exception) {
         }
     }
 
@@ -486,7 +552,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             val totalMinutesToTravel = abs(currentDisplayOffset / 60).toInt()
             val stepDirection = if (currentDisplayOffset > 0) -1 else 1
 
-            for (i in 1..totalMinutesToTravel) {
+            repeat(totalMinutesToTravel) {
                 currentDisplayOffset += (60 * stepDirection)
                 updateTimeUI()
 
@@ -503,6 +569,11 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (isPinViewActive() &&
+            (keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)
+        ) {
+            return true
+        }
         if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
             if (floatActive && !useShakeTrigger && binding.imgFloatObject.visibility != View.VISIBLE && !isFloatTriggerCountdown) {
                 isFloatTriggerCountdown = true
@@ -541,6 +612,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     private fun setupInteractions() {
         gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
             override fun onDoubleTap(e: MotionEvent): Boolean {
+                if (binding.pinScreenContainer.visibility == View.VISIBLE) return true
                 if (binding.imgFloatObject.visibility == View.VISIBLE) return true
 
                 if (isVolumeTriggerForTime) {
@@ -556,12 +628,14 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             if (isRevealed) {
                 cancelReveal = true
                 vibratePattern(isDouble = false)
-            } else {
-
             }
         }
 
         binding.root.setOnTouchListener { _, event ->
+            if (binding.pinScreenContainer.visibility == View.VISIBLE) {
+                return@setOnTouchListener true
+            }
+
             if (gestureDetector.onTouchEvent(event)) return@setOnTouchListener true
 
             when (event.action) {
@@ -628,7 +702,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                 }
                 startActivity(intent)
                 overridePendingTransition(R.anim.slide_in_right, android.R.anim.fade_out)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 try {
                     val intent = Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA).apply {
                         addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
@@ -636,7 +710,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                     }
                     startActivity(intent)
                     overridePendingTransition(R.anim.slide_in_right, android.R.anim.fade_out)
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                 }
             }
         }
@@ -878,7 +952,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                         var isPredictionValid = false
 
                         if (secretMode == 4) {
-                            var offsetMinutes = 0
+                            var offsetMinutes: Int
 
                             if (inputStr == "0" || inputStr == "00") {
                                 offsetMinutes = 0
@@ -1596,6 +1670,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
     override fun onSensorChanged(event: SensorEvent?) {
         if (event == null) return
+        if (isPinViewActive()) return
 
         if (floatActive && useShakeTrigger && binding.imgFloatObject.visibility != View.VISIBLE && !isFloatTriggerCountdown) {
             val x = event.values[0]
@@ -1804,7 +1879,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             getSystemService(VibratorManager::class.java)?.defaultVibrator
         } else {
             @Suppress("DEPRECATION")
-            getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+            getSystemService(VIBRATOR_SERVICE) as? Vibrator
         }
 
         if (vibrator == null || !vibrator.hasVibrator()) return
@@ -1875,60 +1950,16 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     }
 }
 
-private fun blurBitmap(context: Context, bitmap: Bitmap, radius: Float): Bitmap {
-    val clampedRadius = radius.coerceIn(0f, 25f)
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        try {
-            val result = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
-            val canvas = Canvas(result)
-            val blurEffect =
-                RenderEffect.createBlurEffect(clampedRadius, clampedRadius, Shader.TileMode.CLAMP)
-            val paint = Paint().apply { isFilterBitmap = true }
-            canvas.drawBitmap(bitmap, 0f, 0f, paint)
-            return result
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+private fun blurBitmap(bitmap: Bitmap, radius: Float): Bitmap {
+    val safeRadius = radius.coerceIn(1f, 25f)
+    val passes = (safeRadius / 6f).toInt().coerceIn(1, 4)
+
+    var work = bitmap
+    repeat(passes) {
+        val downW = (work.width * 0.55f).toInt().coerceAtLeast(1)
+        val downH = (work.height * 0.55f).toInt().coerceAtLeast(1)
+        val down = Bitmap.createScaledBitmap(work, downW, downH, true)
+        work = Bitmap.createScaledBitmap(down, bitmap.width, bitmap.height, true)
     }
-
-    var rs: RenderScript? = null
-    var inputAlloc: Allocation? = null
-    var outputAlloc: Allocation? = null
-    var script: ScriptIntrinsicBlur? = null
-    return try {
-        rs = RenderScript.create(context)
-        inputAlloc = Allocation.createFromBitmap(rs, bitmap)
-        outputAlloc = Allocation.createTyped(rs, inputAlloc.type)
-        script = ScriptIntrinsicBlur.create(rs, Element.U8_4(rs))
-        script.setRadius(clampedRadius)
-        script.setInput(inputAlloc)
-        script.forEach(outputAlloc)
-        val outBitmap = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
-        outputAlloc.copyTo(outBitmap)
-        outBitmap
-    } catch (e: Exception) {
-        e.printStackTrace()
-        bitmap
-    } finally {
-        try {
-            script?.destroy()
-        } catch (_: Throwable) {
-
-        }
-        try {
-            inputAlloc?.destroy()
-        } catch (_: Throwable) {
-
-        }
-        try {
-            outputAlloc?.destroy()
-        } catch (_: Throwable) {
-
-        }
-        try {
-            rs?.destroy()
-        } catch (_: Throwable) {
-
-        }
-    }
+    return work
 }
