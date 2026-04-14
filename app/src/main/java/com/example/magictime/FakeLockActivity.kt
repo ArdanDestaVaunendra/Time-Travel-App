@@ -54,8 +54,6 @@ import kotlin.math.abs
 import kotlinx.coroutines.withContext
 import androidx.core.view.ViewCompat
 import android.view.WindowManager
-import kotlin.text.toInt
-import kotlin.times
 
 @Suppress("DEPRECATION")
 class FakeLockActivity : AppCompatActivity(), SensorEventListener {
@@ -714,8 +712,6 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                 }
             }
         }
-        applySwipeEffect(binding.bgCamera, false, openCameraAction)
-        applySwipeEffect(binding.ivCamera, false, openCameraAction)
 
         val openPhoneAction = {
             binding.root.animate().alpha(0f).setDuration(200).withEndAction {
@@ -727,7 +723,6 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                     }
                     startActivity(intent)
                     overridePendingTransition(R.anim.slide_in_left, android.R.anim.fade_out)
-
                     handler.postDelayed({ binding.root.alpha = 1f }, 500)
                 } catch (e: Exception) {
                     binding.root.alpha = 1f
@@ -735,67 +730,88 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                 }
             }.start()
         }
-        applySwipeEffect(binding.bgPhone, true, openPhoneAction)
-        applySwipeEffect(binding.ivPhone, true, openPhoneAction)
+
+        applySwipeEffectGroup(listOf(binding.bgCamera, binding.ivCamera), false, openCameraAction)
+        applySwipeEffectGroup(listOf(binding.bgPhone, binding.ivPhone), true, openPhoneAction)
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    private fun applySwipeEffect(view: View, isSwipeRight: Boolean, onTrigger: () -> Unit) {
-        view.setOnTouchListener(object : View.OnTouchListener {
-            var startX = 0f
-            val maxDragDistance = 250f
-            val triggerDistance = 150f
+    private fun applySwipeEffectGroup(
+        views: List<View>,
+        isSwipeRight: Boolean,
+        onTrigger: () -> Unit
+    ) {
+        var startX = 0f
+        val maxDragDistance = 250f
+        val triggerDistance = 150f
 
-            override fun onTouch(v: View, event: MotionEvent): Boolean {
-                when (event.action) {
-                    MotionEvent.ACTION_DOWN -> {
-                        startX = event.rawX
+        val listener = View.OnTouchListener { _, event ->
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    startX = event.rawX
+                    views.forEach { v ->
                         v.animate().scaleX(1.1f).scaleY(1.1f).setDuration(100).start()
-                        return true
+                    }
+                    true
+                }
+
+                MotionEvent.ACTION_MOVE -> {
+                    val dx = event.rawX - startX
+                    val validDx = if (isSwipeRight) {
+                        if (dx > 0) minOf(dx, maxDragDistance) else 0f
+                    } else {
+                        if (dx < 0) maxOf(dx, -maxDragDistance) else 0f
                     }
 
-                    MotionEvent.ACTION_MOVE -> {
-                        val dx = event.rawX - startX
-                        val validDx = if (isSwipeRight) {
-                            if (dx > 0) Math.min(dx, maxDragDistance) else 0f
-                        } else {
-                            if (dx < 0) Math.max(dx, -maxDragDistance) else 0f
-                        }
+                    val progress = kotlin.math.abs(validDx) / maxDragDistance
+                    val dynamicScale = 1.1f + (progress * 0.15f)
 
-                        val progress = Math.abs(validDx) / maxDragDistance
+                    views.forEach { v ->
                         v.translationX = validDx
                         v.alpha = 1f - (progress * 0.5f)
-                        val dynamicScale = 1.1f + (progress * 0.15f)
                         v.scaleX = dynamicScale
                         v.scaleY = dynamicScale
-                        return true
+                    }
+                    true
+                }
+
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    val dx = event.rawX - startX
+                    val validDx = if (isSwipeRight) {
+                        if (dx > 0) minOf(dx, maxDragDistance) else 0f
+                    } else {
+                        if (dx < 0) maxOf(dx, -maxDragDistance) else 0f
                     }
 
-                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                        val dx = event.rawX - startX
-                        val validDx = if (isSwipeRight) {
-                            if (dx > 0) Math.min(dx, maxDragDistance) else 0f
-                        } else {
-                            if (dx < 0) Math.max(dx, -maxDragDistance) else 0f
+                    if (kotlin.math.abs(validDx) >= triggerDistance) {
+                        onTrigger()
+                        views.forEach { v ->
+                            v.translationX = 0f
+                            v.scaleX = 1f
+                            v.scaleY = 1f
+                            v.alpha = 1f
                         }
-
-                        if (Math.abs(validDx) >= triggerDistance) {
-                            onTrigger()
-                            v.translationX = 0f; v.scaleX = 1.0f; v.scaleY = 1.0f; v.alpha = 1.0f
-                        } else {
+                    } else {
+                        views.forEach { v ->
                             v.animate()
-                                .translationX(0f).translationY(0f)
-                                .scaleX(1.0f).scaleY(1.0f).alpha(1.0f)
+                                .translationX(0f)
+                                .translationY(0f)
+                                .scaleX(1f)
+                                .scaleY(1f)
+                                .alpha(1f)
                                 .setDuration(300)
                                 .setInterpolator(OvershootInterpolator())
                                 .start()
                         }
-                        return true
                     }
+                    true
                 }
-                return false
+
+                else -> false
             }
-        })
+        }
+
+        views.forEach { it.setOnTouchListener(listener) }
     }
 
     private fun setupPinScreenInteractions() {
