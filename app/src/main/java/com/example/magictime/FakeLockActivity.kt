@@ -7,9 +7,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.Paint
 import android.graphics.PorterDuff
 import android.graphics.RenderEffect
 import android.graphics.Shader
@@ -87,7 +85,8 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     private var secretMode = 0
     private var correctPin = Defaults.PIN
     private var currentPinInput = ""
-    private val maxPinLength = 6
+    private var isPinErrorShowing = false
+    private var maxPinLength = 6
     private var isSecretSetupMode = false
     private var isRecorderModeActive = false
     private var isAnyPinModeActive = false
@@ -214,7 +213,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         enforcePinOverlayVisibilityState()
 
         isPinEnabled = appSettings.isPinEnabled
-        correctPin = prefs.getString("CUSTOM_PIN", Defaults.PIN) ?: Defaults.PIN
+        applyPinSettingsFromStoredPin()
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
 
@@ -370,6 +369,8 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         }
 
         isVolumeTriggerForTime = if (isProfileMode) {
+            applyPinSettingsFromStoredPin()
+            updatePinIndicators()
             appSettings.isVolumeTriggerForTime
         } else {
             prefs.getBoolean("TRIGGER_VOLUME", true)
@@ -415,6 +416,27 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
     private fun isPinViewActive(): Boolean {
         return binding.pinScreenContainer.visibility == View.VISIBLE
+    }
+
+    private fun normalizeStoredPin(rawPin: String): String {
+        val digitsOnly = rawPin.filter { it.isDigit() }
+        return when {
+            digitsOnly.length in 4..6 -> digitsOnly
+            digitsOnly.length > 6 -> digitsOnly.take(6)
+            else -> Defaults.PIN
+        }
+    }
+
+    private fun applyPinSettingsFromStoredPin() {
+        val raw = prefs.getString("CUSTOM_PIN", Defaults.PIN) ?: Defaults.PIN
+        val normalized = normalizeStoredPin(raw)
+        correctPin = normalized
+        maxPinLength = normalized.length.coerceIn(4, 6)
+        updatePinInfoLabel()
+    }
+
+    private fun updatePinInfoLabel() {
+        binding.tvPinInfoLabel.text = "Your PIN contains at least 4 digits"
     }
 
     private fun forceMarqueeIfNeeded(textView: TextView, rawText: String) {
@@ -714,21 +736,17 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         }
 
         val openPhoneAction = {
-            binding.root.animate().alpha(0f).setDuration(200).withEndAction {
-                try {
-                    val intent = Intent(Intent.ACTION_DIAL).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
-                        addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
-                    }
-                    startActivity(intent)
-                    overridePendingTransition(R.anim.slide_in_left, android.R.anim.fade_out)
-                    handler.postDelayed({ binding.root.alpha = 1f }, 500)
-                } catch (e: Exception) {
-                    binding.root.alpha = 1f
-                    e.printStackTrace()
+            try {
+                val intent = Intent(Intent.ACTION_DIAL).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
+                    addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
                 }
-            }.start()
+                startActivity(intent)
+                overridePendingTransition(R.anim.slide_in_left, android.R.anim.fade_out)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
 
         applySwipeEffectGroup(listOf(binding.bgCamera, binding.ivCamera), false, openCameraAction)
@@ -1070,7 +1088,24 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
                 }
             } else {
-                validatePin()
+                if (isRecorderModeActive) {
+                    if (currentPinInput.length in 4..6) {
+                        temporaryRecordedPin = currentPinInput
+                        isRecorderModeActive = false
+                        showPinErrorFeedback(isDoubleVibrate = true)
+                    }
+                    return@setOnClickListener
+                }
+
+                if (currentPinInput.length in 4..5) {
+                    if (currentPinInput == correctPin) {
+                        finishPinUnlockWithAnimation()
+                    } else {
+                        showPinErrorFeedback(isDoubleVibrate = false)
+                    }
+                } else {
+                    validatePin()
+                }
             }
         }
 
@@ -1096,21 +1131,67 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
     }
 
     private fun onPinDigitEntered(digit: String) {
-        if (currentPinInput.length >= maxPinLength) return
+        if (currentPinInput.length >= 6) return
 
         binding.tvPinError.visibility = View.GONE
         binding.tvPinError.clearAnimation()
 
-        binding.tvEnterPinLabel.visibility = View.INVISIBLE
-        binding.tvPinInfoLabel.visibility = View.INVISIBLE
+        if (!isPinErrorShowing) {
+            binding.tvEnterPinLabel.visibility = View.INVISIBLE
+            binding.tvPinInfoLabel.visibility = View.INVISIBLE
+        }
         binding.pinIndicatorsLayout.visibility = View.VISIBLE
 
         currentPinInput += digit
         updatePinIndicators()
 
-        if (currentPinInput.length == maxPinLength) {
+        if (currentPinInput.length == 6) {
             handler.postDelayed({ validatePin() }, 150)
         }
+    }
+
+    private fun animateDotPop(dot: View) {
+        dot.scaleX = 0f
+        dot.scaleY = 0f
+        dot.alpha = 0f
+
+        dot.animate()
+            .scaleX(1.4f)
+            .scaleY(1.4f)
+            .alpha(1f)
+            .setDuration(110L)
+            .setInterpolator(OvershootInterpolator(1.1f))
+            .withEndAction {
+                dot.animate()
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(90L)
+                    .setInterpolator(DecelerateInterpolator())
+                    .start()
+            }
+            .start()
+    }
+
+    private fun animateDotRemoveSoft(dot: View, onEnd: () -> Unit) {
+        dot.animate().cancel()
+
+        dot.animate()
+            .scaleX(0.70f)
+            .scaleY(0.70f)
+            .alpha(0f)
+            .setDuration(110L)
+            .setInterpolator(DecelerateInterpolator())
+            .withEndAction {
+                dot.background = null
+
+                dot.scaleX = 1f
+                dot.scaleY = 1f
+                dot.alpha = 1f
+
+                onEnd()
+            }
+            .start()
+
     }
 
     private fun updatePinIndicators() {
@@ -1122,13 +1203,34 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             binding.dot5,
             binding.dot6
         )
-        for (i in dots.indices) {
-            dots[i].setBackgroundResource(if (i < currentPinInput.length) R.drawable.bg_pin_dot_filled else R.drawable.bg_pin_dot_empty)
+
+        dots.forEachIndexed { i, dot ->
+            dot.visibility = View.VISIBLE
+
+            val shouldBeFilled = i < currentPinInput.length
+            val wasFilled = dot.background != null
+
+            if (shouldBeFilled) {
+                dot.setBackgroundResource(R.drawable.bg_pin_dot_filled)
+
+                if (!wasFilled) {
+                    animateDotPop(dot)
+                } else {
+                    dot.scaleX = 1f
+                    dot.scaleY = 1f
+                    dot.alpha = 1f
+                }
+            } else {
+                dot.background = null
+                dot.scaleX = 1f
+                dot.scaleY = 1f
+                dot.alpha = 1f
+            }
         }
     }
 
     private fun validatePin() {
-        if (currentPinInput.length < maxPinLength) return
+        if (currentPinInput.length < 4) return
 
         if (isRecorderModeActive) {
             temporaryRecordedPin = currentPinInput
@@ -1144,13 +1246,18 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         }
 
         if (currentPinInput == correctPin) {
-            finishPinUnlockWithAnimation()
+            if (correctPin.length == 6) {
+                finishPinUnlockWithAnimation()
+            } else {
+            }
         } else {
             showPinErrorFeedback(isDoubleVibrate = false)
         }
     }
 
     private fun showPinErrorFeedback(isDoubleVibrate: Boolean) {
+        isPinErrorShowing = true
+
         vibratePattern(isDouble = isDoubleVibrate)
 
         binding.pinIndicatorsLayout.visibility = View.INVISIBLE
@@ -1173,6 +1280,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
         handler.postDelayed({
             if (binding.tvEnterPinLabel.text == "Incorrect PIN") {
+                isPinErrorShowing = false
                 binding.tvEnterPinLabel.translationY = 0f
                 binding.tvEnterPinLabel.text = "Enter PIN"
                 binding.tvPinInfoLabel.visibility = View.VISIBLE
@@ -1182,12 +1290,43 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
 
     private fun onPinDelete() {
         if (currentPinInput.isNotEmpty()) {
+            val removeIndex = currentPinInput.length - 1
+            val dots = listOf(
+                binding.dot1,
+                binding.dot2,
+                binding.dot3,
+                binding.dot4,
+                binding.dot5,
+                binding.dot6
+            )
+
+            val targetDot = dots.getOrNull(removeIndex)
+
+            if (targetDot != null && removeIndex < maxPinLength) {
+                animateDotRemoveSoft(targetDot) {
+                    currentPinInput = currentPinInput.dropLast(1)
+                    updatePinIndicators()
+
+                    if (currentPinInput.isEmpty()) {
+                        if (!isPinErrorShowing) {
+                            binding.tvEnterPinLabel.visibility = View.VISIBLE
+                            binding.tvPinInfoLabel.visibility = View.VISIBLE
+                        }
+                        binding.pinIndicatorsLayout.visibility = View.INVISIBLE
+                    }
+                }
+                return
+            }
+
             currentPinInput = currentPinInput.dropLast(1)
             updatePinIndicators()
         }
+
         if (currentPinInput.isEmpty()) {
-            binding.tvEnterPinLabel.visibility = View.VISIBLE
-            binding.tvPinInfoLabel.visibility = View.VISIBLE
+            if (!isPinErrorShowing) {
+                binding.tvEnterPinLabel.visibility = View.VISIBLE
+                binding.tvPinInfoLabel.visibility = View.VISIBLE
+            }
             binding.pinIndicatorsLayout.visibility = View.INVISIBLE
         }
     }
@@ -1219,8 +1358,9 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
             startScale; binding.tvEnterPinLabel.alpha = 0f
         binding.tvPinInfoLabel.scaleX = startScale; binding.tvPinInfoLabel.scaleY =
             startScale; binding.tvPinInfoLabel.alpha = 0f
-        binding.ivLockIcon.scaleX = startScale; binding.ivLockIcon.scaleY =
-            startScale; binding.ivLockIcon.alpha = 0f
+        binding.ivLockIcon.scaleX = 1f
+        binding.ivLockIcon.scaleY = 1f
+        binding.ivLockIcon.alpha = 1f
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val blurEffect = RenderEffect.createBlurEffect(350f, 350f, Shader.TileMode.CLAMP)
@@ -1262,7 +1402,6 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         popUpAnim(binding.tvEnterPinLabel, 0)
         popUpAnim(binding.tvPinInfoLabel, 50)
         popUpAnim(binding.bottomKeypadContainer, 100)
-        popUpAnim(binding.ivLockIcon, 150)
     }
 
     private fun hidePinScreen() {
@@ -1291,11 +1430,11 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         shrinkOutAnim(binding.pinIndicatorsLayout, 40)
         shrinkOutAnim(binding.bottomKeypadContainer, 60)
 
-        binding.ivLockIcon.animate()
-            .scaleX(0f).scaleY(0f).alpha(0f)
-            .setDuration(duration)
-            .setInterpolator(shrinkInterpolator)
-            .start()
+        binding.ivLockIcon.clearAnimation()
+        binding.ivLockIcon.animate().cancel()
+        binding.ivLockIcon.scaleX = 1f
+        binding.ivLockIcon.scaleY = 1f
+        binding.ivLockIcon.alpha = 1f
 
         val scaleRestoreViews = listOf(
             binding.tvBigClock, binding.tvDate, binding.ivLock,
@@ -1522,10 +1661,11 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         expandAndFadeOut(binding.pinIndicatorsLayout); expandAndFadeOut(binding.bottomKeypadContainer)
 
         val viewsToHide = listOf(
-            binding.tvBigClock, binding.tvDate, binding.ivLock, binding.tvTicker,
+            binding.tvBigClock, binding.tvDate, binding.tvTicker,
             binding.tvMarqueeBottom, binding.statusBarContainer, binding.bgPhone,
             binding.ivPhone, binding.bgCamera, binding.ivCamera
         )
+
         viewsToHide.forEach { it.visibility = View.INVISIBLE }
 
         handler.postDelayed({ exitToHomeScreen() }, duration)
@@ -1754,10 +1894,10 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         val invertedAlpha = 1f - progress
         val translationUp = -300f * progress
 
-        binding.tvBigClock.translationY = translationUp; binding.tvDate.translationY =
-            translationUp; binding.ivLock.translationY = translationUp
-        binding.tvBigClock.alpha = invertedAlpha; binding.tvDate.alpha =
-            invertedAlpha; binding.ivLock.alpha = invertedAlpha
+        binding.tvBigClock.translationY = translationUp
+        binding.tvDate.translationY = translationUp
+        binding.tvBigClock.alpha = invertedAlpha
+        binding.tvDate.alpha = invertedAlpha
 
         binding.bgPhone.translationY = 200f * progress; binding.bgPhone.translationX =
             -150f * progress; binding.bgPhone.alpha = invertedAlpha
@@ -1788,10 +1928,11 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         }
 
         val views = listOf(
-            binding.tvBigClock, binding.tvDate, binding.ivLock,
+            binding.tvBigClock, binding.tvDate,
             binding.bgPhone, binding.ivPhone, binding.bgCamera, binding.ivCamera,
             binding.statusBarContainer, binding.tvTicker, binding.tvMarqueeBottom
         )
+
         views.forEach { resetView(it) }
     }
 
@@ -1806,11 +1947,8 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
                 .setInterpolator(interpolator).start()
         }
 
-        animateOut(binding.tvBigClock, -500f, 0f); animateOut(
-            binding.tvDate,
-            -500f,
-            0f
-        ); animateOut(binding.ivLock, -500f, 0f)
+        animateOut(binding.tvBigClock, -500f, 0f)
+        animateOut(binding.tvDate, -500f, 0f)
         animateOut(binding.bgPhone, 400f, -300f); animateOut(binding.ivPhone, 400f, -300f)
         animateOut(binding.bgCamera, 400f, 300f); animateOut(binding.ivCamera, 400f, 300f)
         animateOut(binding.statusBarContainer, 0f, 0f); animateOut(
@@ -1845,7 +1983,7 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         }
 
         val expandViews = listOf(
-            binding.tvBigClock, binding.tvDate, binding.ivLock,
+            binding.tvBigClock, binding.tvDate,
             binding.bgPhone, binding.ivPhone, binding.bgCamera, binding.ivCamera
         )
 
@@ -1857,6 +1995,14 @@ class FakeLockActivity : AppCompatActivity(), SensorEventListener {
         fadeOnlyViews.forEach { fadeOutOnly(it) }
 
         handler.postDelayed({
+            binding.ivLock.clearAnimation()
+            binding.ivLock.animate().cancel()
+            binding.ivLock.scaleX = 1f
+            binding.ivLock.scaleY = 1f
+            binding.ivLock.alpha = 1f
+            binding.ivLock.translationX = 0f
+            binding.ivLock.translationY = 0f
+            binding.ivLock.visibility = View.INVISIBLE
             performUnlock()
             (expandViews + fadeOnlyViews).forEach { it.visibility = View.INVISIBLE }
         }, duration)

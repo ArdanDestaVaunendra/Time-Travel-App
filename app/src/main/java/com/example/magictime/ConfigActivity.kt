@@ -525,12 +525,32 @@ class ConfigActivity : AppCompatActivity() {
         editor.putBoolean("USE_5G", binding.switch5G.isChecked)
         editor.putString("CUSTOM_CARRIER", binding.etCustomCarrier.text.toString())
         editor.putString("CUSTOM_MARQUEE", binding.etCustomMarquee.text.toString())
-        val pinInput = binding.etCustomPin.text.toString()
-        editor.putString("CUSTOM_PIN", if (pinInput.isNotEmpty()) pinInput else Defaults.PIN)
+        val pinInput = binding.etCustomPin.text.toString().trim()
+        val pinToSave = if (binding.switchEnablePin.isChecked) {
+            if (pinInput.matches(Regex("^\\d{4,6}$"))) pinInput else (prefs.getString("CUSTOM_PIN", Defaults.PIN) ?: Defaults.PIN)
+        } else {
+            Defaults.PIN
+        }
+        editor.putString("CUSTOM_PIN", pinToSave)
         editor.putInt("REVEAL_DURATION", revealDurationSeconds)
         editor.putString("REVEAL_TEXT", revealInput)
         editor.putInt("REVEAL_DELAY", revealDelaySeconds)
         editor.apply()
+    }
+
+    private fun validateCustomPinOrShowError(): Boolean {
+        if (!binding.switchEnablePin.isChecked) return true
+
+        val pinInput = binding.etCustomPin.text.toString().trim()
+        if (!pinInput.matches(Regex("^\\d{4,6}$"))) {
+            binding.etCustomPin.error = "PIN must be 4-6 digits."
+            binding.etCustomPin.requestFocus()
+            android.widget.Toast.makeText(this, "PIN must be 4-6 digits.", android.widget.Toast.LENGTH_SHORT).show()
+            return false
+        }
+
+        binding.etCustomPin.error = null
+        return true
     }
 
     private fun loadFloatSettings() {
@@ -687,6 +707,8 @@ class ConfigActivity : AppCompatActivity() {
     }
 
     private fun saveAdvancedAndExit() {
+        if (!validateCustomPinOrShowError()) return
+
         saveFloatSettings()
         saveSettings()
 

@@ -80,9 +80,11 @@ class PersonalizeActivity : AppCompatActivity() {
         }
 
         binding.btnSavePersonalize.setOnClickListener {
-            saveDataToSettings()
-            Toast.makeText(this, "Personalize Saved!", Toast.LENGTH_SHORT).show()
-            finish()
+            val saved = saveDataToSettings()
+            if (saved) {
+                Toast.makeText(this, "Personalize Saved!", Toast.LENGTH_SHORT).show()
+                finish()
+            }
         }
 
         binding.btnPersonalizePreviewDone.setOnClickListener {
@@ -121,7 +123,25 @@ class PersonalizeActivity : AppCompatActivity() {
         binding.etCustomPin.visibility = if (currentSettings.isPinEnabled) View.VISIBLE else View.GONE
     }
 
-    private fun saveDataToSettings() {
+    private fun validateCustomPinOrShowError(): Boolean {
+        if (!binding.switchEnablePin.isChecked) return true
+
+        val pinInput = binding.etCustomPin.text.toString().trim()
+
+        if (!pinInput.matches(Regex("^\\d{4,6}$"))) {
+            binding.etCustomPin.error = "PIN must be 4-6 digits."
+            binding.etCustomPin.requestFocus()
+            Toast.makeText(this, "PIN must be 4-6 digits.", Toast.LENGTH_SHORT).show()
+            return false
+        }
+
+        binding.etCustomPin.error = null
+        return true
+    }
+
+    private fun saveDataToSettings(): Boolean {
+        if (!validateCustomPinOrShowError()) return false
+
         currentSettings.isPinEnabled = binding.switchEnablePin.isChecked
         currentSettings.showOperator = binding.switchShowCarrier.isChecked
         currentSettings.showRunningText = binding.switchShowMarquee.isChecked
@@ -129,14 +149,17 @@ class PersonalizeActivity : AppCompatActivity() {
         currentSettings.operatorText = binding.etCustomCarrier.text.toString()
         currentSettings.marqueeText = binding.etCustomMarquee.text.toString()
 
-        val pinInput = binding.etCustomPin.text.toString()
+        val pinInput = binding.etCustomPin.text.toString().trim()
+        val pinToSave = if (currentSettings.isPinEnabled) pinInput else Defaults.PIN
+
         prefs.edit()
-            .putString("CUSTOM_PIN", if (pinInput.isNotEmpty()) pinInput else Defaults.PIN)
+            .putString("CUSTOM_PIN", pinToSave)
             .putString("CUSTOM_CARRIER", currentSettings.operatorText)
             .putString("CUSTOM_MARQUEE", currentSettings.marqueeText)
             .apply()
 
         prefManager.saveActiveSession(currentSettings)
+        return true
     }
 
     private fun setupLivePreview(editText: EditText, label: String) {

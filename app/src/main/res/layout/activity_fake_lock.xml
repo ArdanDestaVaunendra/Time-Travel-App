@@ -292,7 +292,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:fontFamily="sans-serif"
-            android:text="Your PIN contains at least 6 digits."
+            android:text="Your PIN must contain 4 to 6 digits."
             android:textColor="#B3FFFFFF"
             android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
@@ -305,6 +305,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:orientation="horizontal"
+            android:gravity="center_horizontal"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tvPinInfoLabel">
@@ -325,44 +326,44 @@
 
             <View
                 android:id="@+id/dot1"
-                android:layout_width="14dp"
-                android:layout_height="14dp"
-                android:layout_margin="8dp"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_margin="6dp"
                 android:background="@drawable/bg_pin_dot_empty" />
 
             <View
                 android:id="@+id/dot2"
-                android:layout_width="14dp"
-                android:layout_height="14dp"
-                android:layout_margin="8dp"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_margin="6dp"
                 android:background="@drawable/bg_pin_dot_empty" />
 
             <View
                 android:id="@+id/dot3"
-                android:layout_width="14dp"
-                android:layout_height="14dp"
-                android:layout_margin="8dp"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_margin="6dp"
                 android:background="@drawable/bg_pin_dot_empty" />
 
             <View
                 android:id="@+id/dot4"
-                android:layout_width="14dp"
-                android:layout_height="14dp"
-                android:layout_margin="8dp"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_margin="6dp"
                 android:background="@drawable/bg_pin_dot_empty" />
 
             <View
                 android:id="@+id/dot5"
-                android:layout_width="14dp"
-                android:layout_height="14dp"
-                android:layout_margin="8dp"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_margin="6dp"
                 android:background="@drawable/bg_pin_dot_empty" />
 
             <View
                 android:id="@+id/dot6"
-                android:layout_width="14dp"
-                android:layout_height="14dp"
-                android:layout_margin="8dp"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_margin="6dp"
                 android:background="@drawable/bg_pin_dot_empty" />
         </LinearLayout>
 
